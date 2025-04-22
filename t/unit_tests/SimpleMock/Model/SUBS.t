@@ -41,4 +41,7 @@ is_deeply \%hash, { key => 'value' }, 'hash mock';
 is TestModule::sub_four(5), 10, 'coderef mock';
 is TestModule::sub_four(10), 20, 'coderef mock with different arg';
 
+is TestModule::sub_five(), "mocked sub_five", 'mocked sub_five in SimpleMocks::Mocks::TestModule';
+is TestModule::sub_five(1,2), "mocked sub_five with args", 'mocked sub_five in SimpleMocks::Mocks::TestModule with args';
+
 done_testing();
