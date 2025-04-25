@@ -9,6 +9,11 @@ use constant 'TEST_CONSTANT', 42;
 # (just for the test)
 sub sub_one { 'one'; }
 sub sub_two { 'two'; }
+
+# used in test for SimpleMock::Model::SUBS
 sub sub_three { 'three'; }
+sub sub_four { 'four'; }
+sub sub_five { 'five'; }
+sub sub_six { 'six'; }
 
 1;

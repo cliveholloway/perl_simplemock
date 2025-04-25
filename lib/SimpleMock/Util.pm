@@ -29,6 +29,10 @@ sub all_file_subs {
 # create sha for arg lists sent
 sub generate_args_sha {
   my $args = shift;
+
+  # make an empty hashref undef
+  $args = undef unless $args && %$args;
+
   # coderefs will be replaced with dummy markers safely, so disable warnings for this
   local $SIG{__WARN__} = sub {
     $_[0] =~ /^Encountered CODE ref/

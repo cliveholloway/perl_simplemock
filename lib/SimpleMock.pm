@@ -104,3 +104,81 @@ BEGIN {
 }
 
 1;
+
+=head1 NAME
+
+SimpleMock - A simple mocking framework for Perl
+
+=head1 SYNOPSIS
+
+  use SimpleMock qw(register_mocks);
+
+  # register mocks for a model
+  register_mocks(
+    SUBS => {
+      'MyModel' => {
+        'my_method' => [
+          { returns => sub { return 42 } },
+        ],
+      },
+    },
+  );
+
+=head1 DESCRIPTION
+
+SimpleMock is a simple mocking framework for Perl. It allows you to
+easily mock sub calls in your code for testing purposes. It works by
+overriding the "require" function to load mock files when a module
+is loaded to load mock methods on top of the original methods. This allows
+you to create mock methods that can be used in your tests without
+modifying the original code. The mock methods can be defined in three ways:
+
+=head2 In a default mock module
+
+Any method in SimpleMock::Mocks::Namespace that matches a method in the original
+Namespace module will be used as a default mock. This distribution comes with
+default mocks for common modules like DBI, LWP, and HTTP::Request. You can also
+roll your own default mocks by creating a module in the SimpleMock::Mocks namespace
+
+=head2 Via calls to register_mocks in the mocks modules
+
+Calls to register_mocks in individual SimpleMock::Mocks modules allow you to
+set mocks that are available to all tests. This is useful for setting up a
+default mock for a module that is used in many tests.
+
+=head2 Via calls to register_mocks in your test code
+
+You can extend the existing mocks (and override default mocks) by calling
+register_mocks in your test code. This allows you to create mocks that are
+fine tuned to your test cases.
+
+=head1 METHODS
+
+=head2 register_mocks
+
+This is the only public method in the module. It takes a hash of model mocks
+where the top level keys refer to the model and the values define the actual
+mocks. Different mocks may have different formats - eg, SUBS have namespaces
+with methods, DBI has a different format.
+
+  use SimpleMock qw(register_mocks);
+
+  register_mocks(
+    SUBS => {
+      'MyModel' => {
+        'my_method' => [
+          { returns => sub { return 42 } },
+        ],
+      },
+    },
+    DBI => [
+      # TODO - flesh out when written
+    ],
+  );
+
+See the documentation in each SimpleMock::Model namespcae for details of mock 
+formats.
+
+=head1 AUTHOR
+
+Clive Holloway
