@@ -10,7 +10,7 @@ use SimpleMock::Util qw(
   generate_args_sha
 );
 
-our $HTTP;
+our $HTTP_MOCKS;
 
 BEGIN {
   use LWP::UserAgent;
@@ -48,7 +48,7 @@ sub mock_send_request {
 
   # remove QS from URL before lookup
   $url =~ s/\?.*//;
-  my $response = $HTTP->{$url}->{$method}->{$args_sha}
+  my $response = $HTTP_MOCKS->{$url}->{$method}->{$args_sha}
                   or die "No mock is defined for url ($url), method ($method), args: ". Dumper(\%request_args);
   
   return $response;
@@ -78,7 +78,7 @@ sub register_mocks {
                        );
 
         my $sha = generate_args_sha($mock->{args});   
-        $HTTP->{$url}->{$method}->{$sha} = $response;
+        $HTTP_MOCKS->{$url}->{$method}->{$sha} = $response;
       }
     }
   }

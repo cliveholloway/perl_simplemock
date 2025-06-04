@@ -31,7 +31,7 @@ sub generate_args_sha {
   my $args = shift;
 
   # make an empty hashref undef
-  $args = undef unless $args && %$args;
+  $args = undef unless $args && ref $args;
 
   # coderefs will be replaced with dummy markers safely, so disable warnings for this
   local $SIG{__WARN__} = sub {
