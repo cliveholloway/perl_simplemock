@@ -176,7 +176,7 @@ with methods, DBI has a different format.
     ],
   );
 
-See the documentation in each SimpleMock::Model namespcae for details of mock 
+See the documentation in each SimpleMock::Model namespcae for details of mock
 formats.
 
 =head1 AUTHOR

@@ -5,7 +5,6 @@ use DBI;
 use DBD::Mock;
 use Scalar::Util qw(blessed);
 use Storable qw(dclone);
-
 use Data::Dumper;
 
 use SimpleMock::Util qw(
@@ -19,6 +18,15 @@ our $drh = DBI->install_driver('SimpleMock');
 our @valid_global_meta_keys = (
     # 0|1 allow queries that are not mocked to run with a default empty result set
     'allow_unmocked_queries',
+
+    # 0|1 if true, then $sth->execute returns undef (use for error checking tests)
+    'execute_fail',
+
+    # 0|1 if true, then $dbh->connect returns undef (use for error checking tests)
+    'connect_fail',
+
+    # 0|1 if true, then $dbh->prepare fails with invalid SQL error
+    'prepare_fail',
 );
 our %valid_global_meta_keys_lookup;
 undef @valid_global_meta_keys_lookup{ @valid_global_meta_keys };
@@ -55,12 +63,19 @@ sub register_mocks {
         $DBI_MOCKS->{_meta}->{$key} = $meta->{$key};
     }
 
-    my $queries = $mocks_data->{QUERIES} || {};
+    my $queries = $mocks_data->{QUERIES} || [];
 
-    QUERY: foreach my $query (keys %$queries) {
-        my $normalized_query = _normalize_query($query);
-        MOCK: foreach my $mock (@{$queries->{$query}}) { 
-            my $sha = generate_args_sha(delete $mock->{args});
+    QUERY: foreach my $query (@$queries) {
+        my $normalized_query = _normalize_query($query->{query});
+        my $cols = $query->{cols} || [];
+        RESULT: foreach my $result (@{$query->{results} || []}) {
+            my $data = $result->{data} || [[]];
+            my $sha = generate_args_sha($result->{args});
+            my $mock = {
+                data => $data,
+                cols => $cols,
+                args => $result->{args} || [],
+            };
             $DBI_MOCKS->{$normalized_query}->{$sha} = dclone($mock);
         }
     }
