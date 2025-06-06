@@ -260,11 +260,15 @@ Meta tags are used to make aspects of the DBD to explicitly fail, or to allow un
 
 These are the available flags you can set in the `META` section of your mocks registration:
 
-=over 4
+=over
+
 =item * `allow_unmocked_queries`: If set to 1, unmocked queries will return an empty result set and not throw an exception.
 =item * `connect_fail`: If set to 1, simulates a connection failure when connecting to the mock database.
 =item * `prepare_fail`: If set to 1, simulates a failure when preparing a statement.
 =item * `execute_fail`: If set to 1, simulates a failure when executing a statement.
+
 =back
+
+Note that if you set connect_fail, prepare_fail and execute_fail are moot at that point, so only enable one at a time as needed.
 
 =cut

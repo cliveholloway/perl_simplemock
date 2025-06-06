@@ -19,12 +19,10 @@ our @EXPORT_OK = qw(
 
 our $VERSION = '0.01';
 
-# enable this to troubleshoot
-our $DEBUG=0;
-
+# enable this env var to troubleshoot
 sub _debug {
     my $message = shift;
-    $DEBUG and carp "DEBUG: $message";
+    $ENV{DEBUG_SIMPLEMOCK} and carp "DEBUG: $message";
 }
 
 sub register_mocks {
@@ -140,13 +138,16 @@ SimpleMock is a simple mocking framework for Perl. It allows you to
 easily mock various integrations in your code via mocks. Initially, the
 following models are supported:
 
-=over 4
+=over
 
 =item * SUBS - for mocking subroutine calls
 =item * DBI - for mocking DBI code
 =item * LWP - for mocking LWP::UserAgent code
 
-=back 4
+See documentation in each SimpleMock::Model::* namespace for details of 
+the mock data formats.
+
+=back
 
 Other models can easily be added via the SimpleMock::Model namespace.
 

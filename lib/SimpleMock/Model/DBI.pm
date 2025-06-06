@@ -85,7 +85,7 @@ sub _get_mock_for {
 
 1;
 
-=HEAD1 NAME
+=head1 NAME
 
 SimpleMock::Model::DBI - A mock model for DBI queries
 

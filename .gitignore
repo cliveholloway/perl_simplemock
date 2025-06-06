@@ -1,2 +1,8 @@
 .proverc
-Makefile
+/Makefile
+/blib/
+/Build
+/MYMETA.*
+*.o
+*.bs
+*.tar.gz

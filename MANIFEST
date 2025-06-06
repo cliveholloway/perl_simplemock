@@ -1,0 +1,21 @@
+cpanfile
+lib/DBD/SimpleMock.pm
+lib/SimpleMock.pm
+lib/SimpleMock/Mocks/DBI.pm
+lib/SimpleMock/Mocks/LWP/UserAgent.pm
+lib/SimpleMock/Model/DBI.pm
+lib/SimpleMock/Model/LWP.pm
+lib/SimpleMock/Model/SUBS.pm
+lib/SimpleMock/Util.pm
+LICENSE
+Makefile.PL
+MANIFEST			This list of files
+README.txt
+t/lib/SimpleMock/Mocks/TestModule.pm
+t/lib/TestModule.pm
+t/lib/TestModule2.pm
+t/unit_tests/SimpleMock.t
+t/unit_tests/SimpleMock/Model/DBI.t
+t/unit_tests/SimpleMock/Model/LWP.t
+t/unit_tests/SimpleMock/Model/SUBS.t
+t/unit_tests/SimpleMock/Util.t

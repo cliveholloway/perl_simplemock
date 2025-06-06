@@ -117,7 +117,7 @@ If args are not specified, the mock will be registered as a default mock for tha
 
 The response can be a simple content string, or a hashref with the following keys:
 
-=over 4
+=over
 
 =item * code - HTTP status code (default: 200)
 =item * message - HTTP status message (default: derived from code)
