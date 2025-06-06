@@ -2,6 +2,8 @@ package SimpleMock::Mocks::LWP::UserAgent;
 use strict;
 use warnings;
 
+our $VERSION = '0.01';
+
 # adds a handler to LWP::UserAgent to mock HTTP requests
 
 require LWP::UserAgent;

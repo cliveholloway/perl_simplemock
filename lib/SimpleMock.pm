@@ -17,6 +17,8 @@ our @EXPORT_OK = qw(
     register_mocks
 );
 
+our $VERSION = '0.01';
+
 # enable this to troubleshoot
 our $DEBUG=0;
 

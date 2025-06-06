@@ -1,6 +1,8 @@
 use strict;
 use warnings;
 
+our $VERSION = '0.01';
+
 # built out from DBD::Nullp;
 {
     package DBD::SimpleMock;

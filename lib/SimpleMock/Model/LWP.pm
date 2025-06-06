@@ -10,6 +10,8 @@ use SimpleMock::Util qw(
     generate_args_sha
 );
 
+our $VERSION = '0.01';
+
 our $HTTP_MOCKS;
 
 sub mock_send_request {

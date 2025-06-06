@@ -7,6 +7,8 @@ use SimpleMock::Util qw(
 );
 use Data::Dumper;
 
+our $VERSION = '0.01';
+
 our $SUBS;
 sub register_mocks {
     my $mocks_data = shift;

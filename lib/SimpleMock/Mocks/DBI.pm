@@ -3,6 +3,8 @@ use strict;
 use warnings;
 
 no warnings 'redefine';
+
+our $VERSION = '0.01';
             
 my $orig_connect = \&DBI::connect;
      

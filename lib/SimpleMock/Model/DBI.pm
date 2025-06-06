@@ -11,6 +11,8 @@ use SimpleMock::Util qw(
   generate_args_sha
 );
 
+our $VERSION = '0.01';
+
 our $DBI_MOCKS;
 
 our $drh = DBI->install_driver('SimpleMock');
