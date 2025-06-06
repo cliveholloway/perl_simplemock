@@ -116,7 +116,7 @@ SimpleMock - A simple mocking framework for Perl
     # register mocks for a model
     register_mocks(
         SUBS => {
-            'MyModel' => {
+            'MyModule' => {
                 'my_method' => [
                     { returns => sub { return 42 } },
                 ],
