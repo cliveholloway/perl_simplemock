@@ -68,7 +68,7 @@ $sth = $dbh->prepare('SELECT name, email FROM user where name like=?');
 $rs = $sth->execute('D%');
 is_deeply $sth->fetchrow_arrayref, $d2->[0], "fetchrow_arrayref 1";
 is_deeply $sth->fetchrow_arrayref, $d2->[1], "fetchrow_arrayref 2";
-is_deeply $sth->fetchrow_arrayref, undef,    "fetchrow_arrayref 3";
+is $sth->fetchrow_arrayref, undef, "fetchrow_arrayref 3 (undefined)";
 
 # prepare_cached / fetchrow_array
 $sth = $dbh->prepare_cached('SELECT name, email FROM user where name like=?');
