@@ -125,7 +125,6 @@ use warnings;
     sub execute {
         my ($sth, @arg) = @_;
         return if $SimpleMock::Model::DBI::DBI_MOCKS->{_meta}->{execute_fail};
-
         my $mock = SimpleMock::Model::DBI::_get_mock_for($sth->{Statement}, \@arg);
         my $field_count = @{$mock->{data}->[0]};
         $sth->STORE(NUM_OF_FIELDS => $field_count);
@@ -238,11 +237,15 @@ In your test, register your mock queries and their expected results using the `r
             # If you are using the `*_hashref` methods, you must also define 'cols'
             QUERIES => [
                 {
-                    query => 'SELECT id, name, email FROM my_table WHERE name LIKE ?',
+                    sql => 'SELECT id, name, email FROM my_table WHERE name LIKE ?',
                     results => [
+                        # data is an array ref of arrayrefs, each representing a row 
                         { args => [ 'C%' ], data => $d1 },
                         { args => [ 'D%' ], data => $d2 },
+                        # no args means it will match any query with no placeholders
+                        { data => $d3 }, # this will match any query without placeholders
                     ],
+                    # optional, if you are using the *_hashref methods
                     cols => [ 'id', 'name', 'email' ],
                 },
             ],
@@ -255,11 +258,11 @@ Meta tags are used to make aspects of the DBD to explicitly fail, or to allow un
 
 These are the available flags you can set in the `META` section of your mocks registration:
 
-- `allow_unmocked_queries`: If set to 1, unmocked queries will return an empty result set and not throw an exception.
-- `connect_fail`: If set to 1, simulates a connection failure when connecting to the mock database.
-- `prepare_fail`: If set to 1, simulates a failure when preparing a statement.
-- `execute_fail`: If set to 1, simulates a failure when executing a statement.
+=over 4
+=item * `allow_unmocked_queries`: If set to 1, unmocked queries will return an empty result set and not throw an exception.
+=item * `connect_fail`: If set to 1, simulates a connection failure when connecting to the mock database.
+=item * `prepare_fail`: If set to 1, simulates a failure when preparing a statement.
+=item * `execute_fail`: If set to 1, simulates a failure when executing a statement.
+=back
 
 =cut
-
-

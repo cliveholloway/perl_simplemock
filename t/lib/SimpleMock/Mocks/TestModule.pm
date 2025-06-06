@@ -10,14 +10,14 @@ sub sub_two {
 
 # You can also set global default mocks for a subroutine in the package
 register_mocks(
-  'SUBS' => {
-    'TestModule' => {
-      sub_five => [
-        { returns => "mocked sub_five" },
-        { args => [1,2], returns => "mocked sub_five with args" },
-      ],
-    }
-  },
+    'SUBS' => {
+        'TestModule' => {
+            sub_five => [
+                { returns => "mocked sub_five" },
+                { args => [1,2], returns => "mocked sub_five with args" },
+            ],
+        }
+    },
 );
 
 1;

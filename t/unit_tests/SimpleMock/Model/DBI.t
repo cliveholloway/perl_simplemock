@@ -10,48 +10,37 @@ use DBI;
 use Data::Dumper;
 
 my $d1 = [
-  [ 'Clive', 'Clive@testme.com' ],
-  [ 'Colin', 'Colin@testme.com' ],
+    [ 'Clive', 'Clive@testme.com' ],
+    [ 'Colin', 'Colin@testme.com' ],
 ];
 
 my $d2 = [
-  [ 'Dave', 'dave@testme.com' ],
-  [ 'Diane', 'diane@testme.com' ],
+    [ 'Dave', 'dave@testme.com' ],
+    [ 'Diane', 'diane@testme.com' ],
 ];
 
 my $d3 = [
-  [ 1, 'Clive', 'Clive@testme.com' ],
-  [ 2, 'Colin', 'Colin@testme.com' ],
+    [ 1, 'Clive', 'Clive@testme.com' ],
+    [ 2, 'Colin', 'Colin@testme.com' ],
 ];
 
 my $d4 = [
-  [ 1, 'Dave', 'dave@testme.com' ],
-  [ 2, 'Diane', 'diane@testme.com' ],
+    [ 1, 'Dave', 'dave@testme.com' ],
+    [ 2, 'Diane', 'diane@testme.com' ],
 ];
-
-# TODO - switch structure to:
-# QUERIES => [
-#     {
-#       query => 'SELECT name, email FROM user where name like=?',
-#       cols => [ 'name', 'email' ],
-#       results => [
-#         { args => [ 'C%' ], data => $d1 },
-#         { args => [ 'D%' ], data => $d2 },
-#       ],
-#     },
-# ],
 
 SimpleMock::Model::DBI::register_mocks({
     QUERIES => [
         {
-            query => 'SELECT name, email FROM user where name like=?',
+            sql => 'SELECT name, email FROM user WHERE name like=?',
             results => [
                 { args => [ 'C%' ], data => $d1 },
-                { args => [ 'D%' ], data => $d2 },
+                # if you set a result with no args, it will be used as the default
+                { data => $d2 },
             ],
         },
         {
-            query => 'SELECT id, name, email FROM user where name like=?',
+            sql => 'SELECT id, name, email FROM user WHERE name like=?',
             # cols is only needed if using selectall_hashref etc
             cols => [ 'id', 'name', 'email' ],
             results => [
@@ -117,14 +106,14 @@ $result = $dbh->selectrow_hashref('SELECT id, name, email FROM user where name l
 is_deeply $result, { email => 'dave@testme.com', name => 'Dave', id => 1 }, 'selectrow_hashref';
 
 # META field tests
-dies_ok { $dbh->do('DROP TABLE user') }  'dies on unmocked query';
+dies_ok { $dbh->do('SELECT unmocked query') } 'dies on unmocked query';
 # update the meta field to allow undefined queries to silently run
 SimpleMock::Model::DBI::register_mocks({
   META => {
     allow_unmocked_queries => 1,
   },
 });
-lives_ok { $dbh->do('DROP TABLE user') }  'doesn\'t die on unmocked query';
+lives_ok { $dbh->do('SELECT unmocked query') }  'doesn\'t die on unmocked query';
 
 # make all queries fail on execution
 SimpleMock::Model::DBI::register_mocks({
@@ -134,6 +123,15 @@ SimpleMock::Model::DBI::register_mocks({
 });
 $sth = $dbh->prepare('SELECT name, email FROM user where name like=?');
 is $sth->execute('C%'), undef, 'execute() fails as expected';
+
+# have the prepare fail
+SimpleMock::Model::DBI::register_mocks({
+    META => {
+        prepare_fail => 1,
+    }
+});
+dies_ok { $dbh->prepare('SELECT name, email FROM user where name like=?') }
+  'META prepare_fail dies on prepare';
 
 # have the connect fail
 SimpleMock::Model::DBI::register_mocks({

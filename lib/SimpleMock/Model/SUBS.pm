@@ -2,50 +2,121 @@ package SimpleMock::Model::SUBS;
 use strict;
 use warnings;
 use SimpleMock::Util qw(
-  generate_args_sha
+    generate_args_sha
+    file_from_namespace
 );
 use Data::Dumper;
 
 our $SUBS;
 sub register_mocks {
-  my $mocks_data = shift;
+    my $mocks_data = shift;
 
-  NAMESPACE: foreach my $ns (keys %$mocks_data) {
-    # the module should already be loaded, but doesn't have to be
-    eval { require $ns; }; $@ and die "Cannot load $ns - $@";
-    SUB: foreach my $sub (keys %{$mocks_data->{$ns}}) {
-      SUBCALL: foreach my $subcall (@{ $mocks_data->{$ns}->{$sub}}) {
-        my $sha = generate_args_sha($subcall->{args});
-        my $returns = $subcall->{returns};
-        $SUBS->{$ns}->{$sub}->{$sha} = $returns;
-      }
+    NAMESPACE: foreach my $ns (keys %$mocks_data) {
 
-      # alias the subroutine to the mock service
-      my $sub_full_name = $ns . '::' . $sub;
-      no strict 'refs';
-      *{$sub_full_name} = sub { _get_return_value_for_args($ns, $sub, \@_) };
+        # the module should already be loaded, but doesn't have to be
+        eval {
+            my $file = file_from_namespace($ns);
+            require $file; 
+        };
+        $@ and die "Cannot load $ns - $@";
+
+        SUB: foreach my $sub (keys %{$mocks_data->{$ns}}) {
+            SUBCALL: foreach my $subcall (@{ $mocks_data->{$ns}->{$sub}}) {
+                my $sha = generate_args_sha($subcall->{args});
+                my $returns = $subcall->{returns};
+                $SUBS->{$ns}->{$sub}->{$sha} = $returns;
+            }
+
+            # alias the subroutine to the mock service
+            my $sub_full_name = $ns . '::' . $sub;
+            no strict 'refs';
+            no warnings 'redefine';
+            *{$sub_full_name} = sub { _get_return_value_for_args($ns, $sub, \@_) };
+        }
     }
-  }
 }
 
 sub _get_return_value_for_args {
-  my ($ns, $sub, $args) = @_;
-  my $sha = generate_args_sha($args);
+    my ($ns, $sub, $args) = @_;
+    my $sha = generate_args_sha($args);
 
-  # if the sha is not found, use default value,
-  # if no default value is found, die since a mock must be defined
-  my $returns = exists $SUBS->{$ns}->{$sub}->{$sha}
-                ? $SUBS->{$ns}->{$sub}->{$sha}  
-                : exists $SUBS->{$ns}->{$sub}->{'_default'}
-                  ? $SUBS->{$ns}->{$sub}->{'_default'}
-                  : die "No mock found for $ns::$sub with args: " . Dumper($args);
+    # if the sha is not found, use default value,
+    # if no default value is found, die since a mock must be defined
+    my $returns = exists $SUBS->{$ns}->{$sub}->{$sha}
+                  ? $SUBS->{$ns}->{$sub}->{$sha}  
+                  : exists $SUBS->{$ns}->{$sub}->{'_default'}
+                    ? $SUBS->{$ns}->{$sub}->{'_default'}
+                    : die "No mock found for $ns::$sub with args: " . Dumper($args);
 
-  # if the return value is a code reference, call it with the args
-  # else return literal value
-  return ref($returns) eq 'CODE'
-         ? $returns->(@$args)
-         : $returns;
-  }
+    # if the return value is a code reference, call it with the args
+    # else return literal value
+    return ref($returns) eq 'CODE'
+           ? $returns->(@$args)
+           : $returns;
 }
 
 1;
+
+=head1 NAME
+
+SimpleMock::Model::SUBS - A module to register and handle mock subroutines.
+
+=head1 DESCRIPTION
+
+Allows you to override subroutines in a namespace with mock implementations. By
+using this along with reasonable design patterns, you can unit test your code
+in a very simple way.
+
+=head1 USAGE
+
+You probably won't want to use this module directly, but rather use the SimpleMock
+module in your tests instead:
+
+    use SimpleMock qw(register_mocks);
+
+    use My Module;
+
+    register_mocks({
+        SUBS => {
+            'My::Module' => {
+                'my_sub' => [
+                    { args => [1, 2], returns => 'return value for args 1,2' },
+                    { returns => 'returns for all other args'; } },
+                ],
+            },
+        },
+    });
+
+The structure of the subs mock call is as follows:
+
+    register_mocks({
+        SUBS => {
+            'Namespace' => {
+                'sub_name' => [
+
+                    # for specific args, returns a specific value
+                    { args => [$arg1, $arg2], returns => 'return value for these args' },
+
+                    # for specific args, run the code reference with the supplied args
+                    { args => [$arg1, $arg2], returns => sub { my ($arg1, $arg2) = @_; ... } },
+
+                    # if args are omitted, the return value is used as a catchall
+                    { returns => 'default return value for all other args' },
+                ],
+            },
+        },
+    });
+
+If the catchall is omitted, the sub call will die if the args sent do not match
+any of the defined mocks.
+
+The return value can be a literal value, or a code reference. If it is a code
+reference, it will be called with the args passed to the subroutine. This is
+useful for generating dynamic return values based on the input arguments. The subref
+should generally be used as a catchall, but there are cases where you might want to
+use it for specific args (eg for a random response).
+
+Use the coderef approach too if you need to return a hash or array, or if
+you need to support wantarray calls.
+
+=cut

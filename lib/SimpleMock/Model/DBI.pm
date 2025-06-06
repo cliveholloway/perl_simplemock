@@ -31,26 +31,13 @@ our @valid_global_meta_keys = (
 our %valid_global_meta_keys_lookup;
 undef @valid_global_meta_keys_lookup{ @valid_global_meta_keys };
 
-BEGIN {
-    use DBI;
-    no warnings 'redefine';
-
-    my $orig_connect = \&DBI::connect;
-
-    # force DBI connect to use dbd:SimpleMock
-    *DBI::connect = sub {
-        my ($class, undef, undef, undef, $attr) = @_;
-        return $orig_connect->($class, 'dbi:SimpleMock:', undef, undef, $attr);
-    };
-}
-
 # lowercase and remove double spaces - I know some DBs are case sensitive, but
 # this can simplify catching typos in tests
-sub _normalize_query {
-    my ($query) = @_;
-    $query = lc($query);
-    $query =~ s/ +/ /g;
-    return $query;
+sub _normalize_sql {
+    my ($sql) = @_;
+    $sql = lc($sql);
+    $sql =~ s/ +/ /g;
+    return $sql;
 }
 
 sub register_mocks {
@@ -66,7 +53,7 @@ sub register_mocks {
     my $queries = $mocks_data->{QUERIES} || [];
 
     QUERY: foreach my $query (@$queries) {
-        my $normalized_query = _normalize_query($query->{query});
+        my $normalized_sql = _normalize_sql($query->{sql});
         my $cols = $query->{cols} || [];
         RESULT: foreach my $result (@{$query->{results} || []}) {
             my $data = $result->{data} || [[]];
@@ -76,18 +63,18 @@ sub register_mocks {
                 cols => $cols,
                 args => $result->{args} || [],
             };
-            $DBI_MOCKS->{$normalized_query}->{$sha} = dclone($mock);
+            $DBI_MOCKS->{$normalized_sql}->{$sha} = dclone($mock);
         }
     }
 }
 
 sub _get_mock_for {
-    my ($query, $args) = @_;
-    my $normalized_query = _normalize_query($query);
+    my ($sql, $args) = @_;
+    my $normalized_sql = _normalize_sql($sql);
     my $sha = generate_args_sha($args);
-    my $mock = $DBI_MOCKS->{$normalized_query}->{$sha};
+    my $mock = $DBI_MOCKS->{$normalized_sql}->{$sha} || $DBI_MOCKS->{$normalized_sql}->{'_default'};
     unless ($mock->{data} || $DBI_MOCKS->{_meta}->{allow_unmocked_queries}) {
-        die "No mock data found for query: '$query' with args: " . Dumper($args);
+        die "No mock data found for query: '$normalized_sql' with args: " . Dumper($args);
     }
     $mock->{data} //= [[]];
 
@@ -95,3 +82,41 @@ sub _get_mock_for {
 }
 
 1;
+
+=HEAD1 NAME
+
+SimpleMock::Model::DBI - A mock model for DBI queries
+
+=head1 DESCRIPTION
+
+This module provides a mock model for DBI queries, allowing you to register
+mock queries and their results. It normalizes queries and handles argument-based mocking.
+
+Meta data can be set to control behavior such as allowing unmocked queries, or to force
+failure on certain operations like i`prepare`, `execute` or `connect`.
+
+=head1 USAGE
+
+You probably won't want to use this module directly, but rather use the SimpleMock
+module in your tests instead:
+
+    use SimpleMock qw(register_mocks);
+
+    register_mocks({
+        DBI => {
+            QUERIES => [
+                { sql => 'SELECT name, email FROM users WHERE id = ?',
+                  results => [ 
+                    { args => [1], data => [ [arrayref, of], [array, refs] ] },
+                    { args => [2], data => [ [another, arrayref], [of, arrayrefs] ] },
+                    { data => [ [default, arrayref], [of, arrayrefs] ] },
+                ],
+            ],
+        },
+    });
+
+For each query, specify the SQL statement, the expected arguments, and the data to return.
+
+If you omit the `args` field, it will return this data for any arguments that do not match.
+
+=cut

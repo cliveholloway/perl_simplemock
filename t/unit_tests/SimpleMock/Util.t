@@ -1,24 +1,21 @@
 use Test::Most;
 use Data::Dumper;
 use TestModule;
+use TestModule2;
 
 use SimpleMock::Util qw(
   all_file_subs
   generate_args_sha
   namespace_from_file
+  file_from_namespace
 );
 
-my @all_subs = sort ( all_file_subs('TestModule.pm') );
+my @all_subs = sort ( all_file_subs('TestModule2.pm') );
 is_deeply(
   \@all_subs,
   [
-    'run_db_query',
-    'sub_five',
-    'sub_four',
-    'sub_one',
-    'sub_six',
-    'sub_three',
-    'sub_two',
+    'one',
+    'two',
   ],
   'all_file_subs() returns all subs in file'
 );
@@ -34,6 +31,9 @@ is $code_sha1, $code_sha2, "generate_args_sha - code args make the same sha";
 
 is namespace_from_file('TestModule/Util.pm'), 'TestModule::Util',
     'namespace_from_file() returns the correct namespace';
+
+is file_from_namespace('TestModule::Util'), 'TestModule/Util.pm',
+    'file_from_namespace() returns the correct file path';
 
 done_testing();
 

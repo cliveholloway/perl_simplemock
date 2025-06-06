@@ -2,6 +2,7 @@ use strict;
 use warnings;
 use Test::Most;
 use SimpleMock;
+use TestModule;
 
 use SimpleMock::Model::SUBS;
 
@@ -10,30 +11,31 @@ SimpleMock::Model::SUBS::register_mocks({
 
     # demo each static return type
     'sub_three' => [
-      { returns => 'default mocked value' },
-      { args => ['scalar'],
-        returns => 'scalar' },
-      { args => ['hashref'],
-        returns => { key => 'value' } },
-      { args => ['arrayref'],
-        returns => [ 'value1', 'value2' ] },
-      { args => ['array'],
-        returns => sub { (1,2,3) } },
-      { args => ['hash'],
-        returns => sub { (key => 'value') } },
+        { returns => 'default mocked value' },
+        { args => ['scalar'],
+          returns => 'scalar' },
+        { args => ['hashref'],
+          returns => { key => 'value' } },
+        { args => ['arrayref'],
+          returns => [ 'value1', 'value2' ] },
+        { args => ['array'],
+          returns => sub { (1,2,3) } },
+        { args => ['hash'],
+          returns => sub { (key => 'value') } },
     ],
 
     # demo a coderef mock that uses the args sent
     'sub_four' => [
-      { returns => sub { my ($arg) = @_; return $arg * 2 } },
+        { returns => sub { my ($arg) = @_; return $arg * 2 } },
     ],
 
     # wantarray example
     'sub_six' => [
-      { returns => sub {
-          my ($arg) = @_;
-          return wantarray ? ($arg, $arg * 2) : $arg * 2;
-        } },
+        { returns => sub {
+              my ($arg) = @_;
+              return wantarray ? ($arg, $arg * 2) : $arg * 2;
+          }
+        },
     ],
   }
 });
