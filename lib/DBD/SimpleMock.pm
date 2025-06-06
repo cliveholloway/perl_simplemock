@@ -142,7 +142,7 @@ our $VERSION = '0.01';
         my $data = shift @{$sth->{simplemock_data}};
         if (!$data || !@$data) {
             $sth->finish;     # no more data so finish
-            return undef;
+            return;
         }
         return $sth->_set_fbav($data);
     }

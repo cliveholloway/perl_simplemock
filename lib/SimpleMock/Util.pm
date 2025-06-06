@@ -20,7 +20,7 @@ sub all_file_subs {
     my $ns = namespace_from_file($file);
     
     my @subs = ();
-    no strict 'refs';
+    no strict 'refs'; ## no critic 'ProhibitNoStrict';
     SYM: foreach my $sym (keys %{$ns.'::'}) {
         if (my $code_ref = *{$ns."::$sym"}{CODE}) {
             # ignore constants

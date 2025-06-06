@@ -31,9 +31,9 @@ sub register_mocks {
         $model =~ /^[A-Z_]+$/ or die "Mock model class must be ALL_CAPS and underscores only! ($model)";
         my $model_ns = 'SimpleMock::Model::'.$model;
         # should already be loaded, but we do this to catch any bad model names
-        eval "require $model_ns"; $@ and die $@;
+        eval "require $model_ns"; $@ and die $@; ## no critic
         my $reg = $model_ns.'::register_mocks';
-        no strict 'refs';
+        no strict 'refs'; ## no critic
         $reg->($mocks_data{$model});
     }
 }
@@ -66,7 +66,7 @@ sub _load_mocks_for {
     foreach my $sub_name (@module_subs) {
         $sub_name =~ s/.*:://;
         my $mock_sub = $mock_ns.'::'.$sub_name;
-        no strict 'refs';
+        no strict 'refs'; ## no critic
         if (defined &{$mock_sub}) {
             _debug("Mapping mock sub $mock_sub to original sub ${original_ns}::$sub_name");
          $default_sub_mocks->{$original_ns}->{$sub_name} = [ { returns => \&{$mock_sub} } ];

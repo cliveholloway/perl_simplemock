@@ -31,7 +31,7 @@ sub register_mocks {
 
             # alias the subroutine to the mock service
             my $sub_full_name = $ns . '::' . $sub;
-            no strict 'refs';
+            no strict 'refs'; ## no critic
             no warnings 'redefine';
             *{$sub_full_name} = sub { _get_return_value_for_args($ns, $sub, \@_) };
         }
