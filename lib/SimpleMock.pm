@@ -69,7 +69,7 @@ sub _load_mocks_for {
         no strict 'refs'; ## no critic
         if (defined &{$mock_sub}) {
             _debug("Mapping mock sub $mock_sub to original sub ${original_ns}::$sub_name");
-         $default_sub_mocks->{$original_ns}->{$sub_name} = [ { returns => \&{$mock_sub} } ];
+            $default_sub_mocks->{$original_ns}->{$sub_name} = [ { returns => \&{$mock_sub} } ];
         }
     }
     register_mocks(

@@ -195,7 +195,7 @@ for a standalone usage example.
             },
             QUERIES => [
                 {
-                    query => 'SELECT id, name, email FROM my_table WHERE name LIKE ?',
+                    sql => 'SELECT id, name, email FROM my_table WHERE name LIKE ?',
                     # each query can have multiple results defined based on placeholder values
                     results -> [
                         { args => [ 'C%' ], data => $d1 },

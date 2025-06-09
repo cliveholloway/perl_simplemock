@@ -8,7 +8,7 @@ use Storable qw(dclone);
 use Data::Dumper;
 
 use SimpleMock::Util qw(
-  generate_args_sha
+    generate_args_sha
 );
 
 our $VERSION = '0.01';
