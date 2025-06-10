@@ -17,7 +17,7 @@ our $VERSION = '0.01';
 
     sub driver  {
         return $drh if $drh;
-        my($class, $attr) = @_;
+        my ($class, $attr) = @_;
         $class .= "::dr";
         ($drh) = DBI::_new_drh($class, {
             'Name' => 'SimpleMock',
@@ -126,7 +126,9 @@ our $VERSION = '0.01';
 
     sub execute {
         my ($sth, @arg) = @_;
-        return if $SimpleMock::Model::DBI::DBI_MOCKS->{_meta}->{execute_fail};
+        if ($SimpleMock::Model::DBI::DBI_MOCKS->{_meta}->{execute_fail}) {
+            return $sth->set_err(1002, "Execute failed");
+        }
         my $mock = SimpleMock::Model::DBI::_get_mock_for($sth->{Statement}, \@arg);
         my $field_count = @{$mock->{data}->[0]};
         $sth->STORE(NUM_OF_FIELDS => $field_count);

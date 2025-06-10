@@ -122,7 +122,7 @@ SimpleMock::Model::DBI::register_mocks({
     }
 });
 $sth = $dbh->prepare('SELECT name, email FROM user where name like=?');
-is $sth->execute('C%'), undef, 'execute() fails as expected';
+dies_ok { $sth->execute('C%') } 'execute() fails as expected';
 
 # have the prepare fail
 SimpleMock::Model::DBI::register_mocks({
