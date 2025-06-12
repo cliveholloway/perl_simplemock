@@ -23,3 +23,13 @@ my $orig = \&LWP::UserAgent::new;
 };
 
 1;
+
+=head1 NAME
+
+SimpleMock::Mocks::LWP::UserAgent - Mock LWP::UserAgent for testing
+
+=head1 DESCRIPTION
+
+This module overrides the constructor of LWP::UserAgent to add a custom request handler that allows for mocking HTTP requests in tests.
+
+=cut

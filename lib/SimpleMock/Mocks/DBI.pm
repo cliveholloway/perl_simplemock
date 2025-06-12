@@ -15,3 +15,14 @@ my $orig_connect = \&DBI::connect;
 };
 
 1;
+
+=head1 NAME
+
+SimpleMock::Mocks::DBI - Mock DBI module for testing
+
+=head1 DESCRIPTION
+
+This module mocks the connect method of the DBI module to force it to use a
+SimpleMock database connection.
+
+=cut
