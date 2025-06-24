@@ -99,21 +99,34 @@ You probably won't use this module directly. Instead, you will use the `SimpleMo
             'http://example.com/api' => {
                 # HTTP method
                 GET => [
+
                     # Each mock is a hashref with args and response
                     # args can be undef for default mock
                     # response can be a content string, or a hashref with code, message, content, and headers
-                    { args => { foo => 'bar' }, response => { code => 200, content => 'Success' } },
-                    { args => { foo => 'bar2' }, response => 'Success' },
+
+                    { args => { foo => 'bar' },
+                      response => { code => 200, content => 'Success' }
+                    },
+
+                    { args => { foo => 'bar2' },
+                      response => 'Success'
+                    },
+
+                    # Default mock for GET method (no args) or for any other args not explicitly defined
                     { response => { code => 404, content => 'Not Found' } },
                 ],
                 POST => [
-                    { args => { data => 'test' }, response => { code => 201, content => 'Created' } },
+                    { args => { data => 'test' },
+                      response => { code => 201, content => 'Created' }
+                    },
                 ],
             },
         },
     });
 
-If args are not specified, the mock will be registered as a default mock for that URL and method. If args are specified, they will be used to differentiate between different mocks for the same URL and method that have different arguments.
+If args are not specified, the mock will be registered as a default mock for that URL and method.
+If args are specified, they will be used to differentiate between different mocks for the same
+URL and method that have different arguments.
 
 The response can be a simple content string, or a hashref with the following keys:
 

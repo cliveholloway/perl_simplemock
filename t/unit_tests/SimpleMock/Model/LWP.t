@@ -2,9 +2,7 @@ use strict;
 use warnings;
 use Test::Most;
 use SimpleMock;
-
 use SimpleMock::Model::LWP;
-
 use LWP::UserAgent;
 
 my $ua = LWP::UserAgent->new;
@@ -66,6 +64,6 @@ my $r4 = $ua->post('http://example.com', {
 is $r4->content, 'Response for POST request with args', "POST request with args";
 
 my $r5 = $ua->get('http://example.com?foo3=bar3');
-is $rs->content, $r1->content, "GET request with unmatched args uses default";
+is $r5->content, $r1->content, "GET request with unmatched args uses default";
 
 done_testing();

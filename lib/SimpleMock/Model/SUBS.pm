@@ -82,7 +82,19 @@ module in your tests instead:
         SUBS => {
             'My::Module' => {
                 'my_sub' => [
-                    { args => [1, 2], returns => 'return value for args 1,2' },
+
+                    # return a specific value for these args
+                    { args => [1, 2],
+                      returns => 'return value for args 1,2' },
+
+                    # run the code reference for these args
+                    # (in this example I'm not using the args, but am showing how
+                    # you would access them in the sub if needed)
+                    { args => [3, 4],
+                      # just return a random number from 1 to 10
+                      returns => sub { my ($arg1, $arg2) = @_; return int(rand(10))+1; } },
+
+                    # return value for any other args
                     { returns => 'returns for all other args'; } },
                 ],
             },
@@ -119,6 +131,7 @@ should generally be used as a catchall, but there are cases where you might want
 use it for specific args (eg for a random response).
 
 Use the coderef approach too if you need to return a hash or array, or if
-you need to support wantarray calls.
+you need to support wantarray calls. I originally considered doing this via another
+key in the mock definition, but it seemed simpler to just use a coderef for these.
 
 =cut

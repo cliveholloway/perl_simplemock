@@ -107,12 +107,23 @@ module in your tests instead:
     register_mocks({
         DBI => {
             QUERIES => [
-                { sql => 'SELECT name, email FROM users WHERE id = ?',
-                  results => [ 
-                    { args => [1], data => [ [arrayref, of], [array, refs] ] },
-                    { args => [2], data => [ [another, arrayref], [of, arrayrefs] ] },
-                    { data => [ [default, arrayref], [of, arrayrefs] ] },
-                ],
+                {
+                    sql => 'SELECT name, email FROM users WHERE id = ?',
+                    results => [ 
+
+                        # specific result data for arg sent
+                        { args => [1],
+                          data => [ [arrayref, of], [array, refs] ] },
+
+                        # specific result data for arg sent
+                        { args => [2],
+                          data => [ [another, arrayref], [of, arrayrefs] ] },
+
+                        # result data for all other args
+                        { data => [ [default, arrayref], [of, arrayrefs] ] },
+
+                    ],
+                },
             ],
         },
     });
