@@ -15,6 +15,8 @@ SimpleMock::Model::LWP::register_mocks({
 
         'GET' => [
             # static request with simple response
+            # currently this is also used as the default response for
+            # unmatched args to simplify the interface
             { response => 'Response for GET request with no args' },
 
             # request with args and simple response
@@ -62,5 +64,8 @@ my $r4 = $ua->post('http://example.com', {
             foo3 => 'bar3'
          });
 is $r4->content, 'Response for POST request with args', "POST request with args";
+
+my $r5 = $ua->get('http://example.com?foo3=bar3');
+is $rs->content, $r1->content, "GET request with unmatched args uses default";
 
 done_testing();

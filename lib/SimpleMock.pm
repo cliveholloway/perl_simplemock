@@ -122,14 +122,14 @@ SimpleMock - A simple mocking framework for Perl
                 ],
             },
         },
-        DBI => [
+        DBI => {
             QUERIES => [
                 ...
             ],
-        ],
-        LWP => [
+        },
+        LWP => {
             ...
-        ],
+        },
     );
 
 =head1 DESCRIPTION
@@ -205,7 +205,7 @@ formats - eg, SUBS have namespaces with methods, DBI has a different format.
                 ],
             },
         },
-        DBI => [
+        DBI => {
             QUERIES => [
                 {
                     sql => 'SELECT name, email FROM user where name like=?',
@@ -226,7 +226,7 @@ formats - eg, SUBS have namespaces with methods, DBI has a different format.
                     ],
                 },
             ],
-        ],
+        },
     );
 
 See the documentation in each SimpleMock::Model::* namespace for details of mock
