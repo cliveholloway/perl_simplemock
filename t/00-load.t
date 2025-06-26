@@ -15,7 +15,5 @@ foreach my $mod (@modules) {
     use_ok($mod) or diag "Couldn't load $mod";
 }
 
-ok 0, 'failing';
-
 done_testing;
 
