@@ -17,4 +17,4 @@ jobs:
         run: cpanm --installdeps --notest .
 
       - name: Run test suite
-        run: prove -Ilib -r t
+        run: prove -It/lib -Ilib -r t
