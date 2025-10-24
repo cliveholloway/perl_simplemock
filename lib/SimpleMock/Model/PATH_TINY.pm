@@ -7,14 +7,15 @@ use Data::Dumper;
 
 our $VERSION = '0.01';
 
-our %PATH_TINY_MOCKS = ();
 
 # list attributes that can be 0 (false) or 1 (true)
 our @t_f_keys = qw(assert exists has_same_bytes);
 my %t_f = (0 =>1, 1=>1);
 
-sub register_mocks {
+sub validate_mocks {
     my $mocks_data = shift;
+
+    my $new_mocks = {};
 
     PATH: foreach my $path (keys %$mocks_data) {
         # implicit directory if has children
@@ -26,8 +27,9 @@ sub register_mocks {
             $t_f{$val} or die "Invalid value for key '$key' in Path::Tiny mock for path '$path' - must be 0|1"; 
         }
 
-        $PATH_TINY_MOCKS{$path} = $mocks_data->{$path};
+        $new_mocks->{PATH_TINY}->{$path} = $mocks_data->{$path};
     }
+    return $new_mocks;
 }
 
 

@@ -4,7 +4,7 @@ use warnings;
 use Exporter 'import';
 use File::Basename qw(dirname);
 use Cwd 'abs_path';
-use Hash::Merge;
+use Hash::Merge qw(merge);
 use Carp qw(carp);
 
 use SimpleMock::Util qw(
@@ -19,6 +19,9 @@ our @EXPORT_OK = qw(
 
 our $VERSION = '0.01';
 
+# all mocks get set in this namespace to make managing them easier
+our $MOCKS = {};
+
 # enable this env var to troubleshoot
 sub _debug {
     my $message = shift;
@@ -27,14 +30,15 @@ sub _debug {
 
 sub register_mocks {
     my %mocks_data = @_;
+
     foreach my $model (keys %mocks_data) {
         $model =~ /^[A-Z_]+$/ or die "Mock model class must be ALL_CAPS and underscores only! ($model)";
         my $model_ns = 'SimpleMock::Model::'.$model;
         # should already be loaded, but we do this to catch any bad model names
         eval "require $model_ns"; $@ and die $@; ## no critic
-        my $reg = $model_ns.'::register_mocks';
+        my $validated_mocks = $model_ns.'::validate_mocks';
         no strict 'refs'; ## no critic
-        $reg->($mocks_data{$model});
+        $MOCKS = merge($MOCKS, $validated_mocks->($mocks_data{$model}));
     }
 }
 

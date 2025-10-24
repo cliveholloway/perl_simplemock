@@ -1,48 +1,50 @@
 use strict;
 use warnings;
 use Test::Most;
-use SimpleMock;
-use SimpleMock::Model::LWP;
+use SimpleMock qw(register_mocks);
 use LWP::UserAgent;
 
 my $ua = LWP::UserAgent->new;
 
-SimpleMock::Model::LWP::register_mocks({
+register_mocks(
 
-    'http://example.com' => {
+    LWP => {
 
-        'GET' => [
-            # static request with simple response
-            # currently this is also used as the default response for
-            # unmatched args to simplify the interface
-            { response => 'Response for GET request with no args' },
+        'http://example.com' => {
 
-            # request with args and simple response
-            { args     => { foo => 'bar' },
-              response => 'Response for GET request with args',
-            },
+            'GET' => [
+                # static request with simple response
+                # currently this is also used as the default response for
+                # unmatched args to simplify the interface
+                { response => 'Response for GET request with no args' },
 
-            # request with args and bespoke response
-            { args => { foo2 => 'bar2' },
-              response => {
-                  code => 404,
-                  message => "Can't find it, dammit!",
-                  headers => {
-                      'x-response-test' => 'foo',
+                # request with args and simple response
+                { args     => { foo => 'bar' },
+                  response => 'Response for GET request with args',
+                },
+
+                # request with args and bespoke response
+                { args => { foo2 => 'bar2' },
+                  response => {
+                      code => 404,
+                      message => "Can't find it, dammit!",
+                      headers => {
+                          'x-response-test' => 'foo',
+                      }
                   }
-              }
-            },
-        ],
+                },
+            ],
 
-        'POST' => [
-            { args     => { foo3 => 'bar3' },
-              response => 'Response for POST request with args',
-            }
-        ],
+            'POST' => [
+                { args     => { foo3 => 'bar3' },
+                  response => 'Response for POST request with args',
+                }
+            ],
 
-    },
+        },
+    }
 
-});
+);
 
 my $r1 = $ua->get('http://example.com');
 isa_ok($r1, 'HTTP::Response', 'HTTP::Response object created');

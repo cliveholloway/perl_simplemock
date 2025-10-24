@@ -14,8 +14,6 @@ require Path::Tiny;
 
 no warnings 'redefine';
 
-our $PATH_TINY_MOCKS = \%SimpleMock::Model::PATH_TINY::PATH_TINY_MOCKS;
-
 # copied over for convenieince
 use constant {
     PATH     => 0,
@@ -38,12 +36,12 @@ my $orig_path = \&Path::Tiny::path;
 # force DBI connect to use dbd:SimpleMock
 *Path::Tiny::path = sub {
     my @arg = @_;
-    confess "No mock defined for path $_[0]" unless $PATH_TINY_MOCKS->{$_[0]}; 
+    confess "No mock defined for path $_[0]" unless $SimpleMock::MOCKS->{PATH_TINY}->{$_[0]}; 
     return $orig_path->(@arg);
 };
 
 *Path::Tiny::slurp = sub {
-    return $PATH_TINY_MOCKS->{$_[0]}->{data};
+    return $SimpleMock::MOCKS->{PATH_TINY}->{$_[0]}->{data};
 };
 
 # synonyms for now. TBD
@@ -65,7 +63,7 @@ my $orig_path = \&Path::Tiny::path;
 # assert defaults to true but can be overridden in mocks if needed
 *Path::Tiny::assert = sub {
     my $self = shift;
-    my $assert = $PATH_TINY_MOCKS->{$self->[0]}->{assert};
+    my $assert = $SimpleMock::MOCKS->{PATH_TINY}->{$self->[0]}->{assert};
     if (defined $assert) {
         $assert or Path::Tiny::Error->throw( "assert", $self->[0], "failed assertion" );
     }
@@ -79,7 +77,7 @@ my $orig_path = \&Path::Tiny::path;
     $self->is_dir
         or $self->_throw('opendir');
 
-    my @mock_paths = keys %$PATH_TINY_MOCKS;
+    my @mock_paths = keys %{$SimpleMock::MOCKS->{PATH_TINY}};
 
     my @children = grep { m|$path/[^/]*$| } @mock_paths;
     return sort map { Path::Tiny::path($_) } @children;
@@ -94,23 +92,25 @@ my $orig_path = \&Path::Tiny::path;
 
     # if target doesn't exist, assume it's a file
     # if it does, see if the target is a directory
-    my $target_path = defined $PATH_TINY_MOCKS->{$dest_path}
-                      ? $PATH_TINY_MOCKS->{$dest_path}->{data}
+    my $target_path = defined $SimpleMock::MOCKS->{PATH_TINY}->{$dest_path}
+                      ? $SimpleMock::MOCKS->{PATH_TINY}->{$dest_path}->{data}
                         ? Path::Tiny::_path($dest_path)->[0]
                         : Path::Tiny::_path($dest_path, $self->basename)->[0]
                       : Path::Tiny::_path($dest_path)->[0];
 
     # now we have the copy, register it as a mock
-    SimpleMock::Model::PATH_TINY::register_mocks({
-        $target_path => $PATH_TINY_MOCKS->{$source_path},
-    });
+    SimpleMock::register_mocks(
+        PATH_TINY => {
+            $target_path => $SimpleMock::MOCKS->{PATH_TINY}->{$source_path},
+        },
+    );
     my $copied = Path::Tiny::_path($target_path);
 };
 
 *Path::Tiny::digest = sub {
     my $self = shift;
     my $path = $self->[0];
-    my $digest = $PATH_TINY_MOCKS->{$path}->{digest}
+    my $digest = $SimpleMock::MOCKS->{PATH_TINY}->{$path}->{digest}
         or die "'digest' attribute must be defined for '$path' mock";
     return $digest;
 };
@@ -125,7 +125,7 @@ my $orig_path = \&Path::Tiny::path;
 
 *Path::Tiny::exists = sub {
     my $self = shift;
-    my $exists = $PATH_TINY_MOCKS->{$self->[0]}->{exists};
+    my $exists = $SimpleMock::MOCKS->{PATH_TINY}->{$self->[0]}->{exists};
     return defined $exists
            ? $exists
            : 1; 
@@ -133,13 +133,13 @@ my $orig_path = \&Path::Tiny::path;
 
 *Path::Tiny::is_file = sub {
     my $path = $_[0]->[0];
-    return $PATH_TINY_MOCKS->{$path}->{data}
+    return $SimpleMock::MOCKS->{PATH_TINY}->{$path}->{data}
            ? 1 : 0;
 };
 
 *Path::Tiny::is_dir = sub {
     my $path = $_[0]->[0];
-    return $PATH_TINY_MOCKS->{$path}->{data}
+    return $SimpleMock::MOCKS->{PATH_TINY}->{$path}->{data}
            ? 0 : 1;
 };
 
@@ -149,7 +149,7 @@ my $orig_path = \&Path::Tiny::path;
 # target file does not need to be mocked. This is just an attribute of the mock object
 *Path::Tiny::has_same_bytes = sub {
     my $path = $_[0]->[0];
-    return $PATH_TINY_MOCKS->{$path}->{has_same_bytes};
+    return $SimpleMock::MOCKS->{PATH_TINY}->{$path}->{has_same_bytes};
 };
 
 # not a full path iterator - only iterates through current directory
@@ -166,7 +166,7 @@ my $orig_path = \&Path::Tiny::path;
     my $self    = shift;
     my $args    = Path::Tiny::_get_args( shift, qw/binmode chomp count/ );
     my $path = $self->[0];
-    my @lines = map { "$_\n" } split /\n/, $PATH_TINY_MOCKS->{$path}->{data};
+    my @lines = map { "$_\n" } split /\n/, $SimpleMock::MOCKS->{PATH_TINY}->{$path}->{data};
     chomp(@lines) if $args->{chomp};
     my $count = $args->{count};
     my @ret = $count
@@ -193,7 +193,7 @@ my $orig_path = \&Path::Tiny::path;
 *Path::Tiny::remove_tree = sub { 1 };
 *Path::Tiny::size= sub {
     my $path = $_[0]->[0];
-    return length($PATH_TINY_MOCKS->{$path}->{data});
+    return length($SimpleMock::MOCKS->{PATH_TINY}->{$path}->{data});
 };
 
 # note: not tested _human_size    , but I think 't's OK
@@ -212,7 +212,7 @@ my $orig_path = \&Path::Tiny::path;
 # hard code in data if needed
 *Path::Tiny::stat = sub { 
     my $path = $_[0]->[0];
-    my $stat = $PATH_TINY_MOCKS->{$path}->{stat};
+    my $stat = $SimpleMock::MOCKS->{PATH_TINY}->{$path}->{stat};
     defined $stat or die "stat must be defined in mock for $path";
     ref $stat eq 'ARRAY' or die "stat muct be defined as an arrayref for $path";
     return $stat;

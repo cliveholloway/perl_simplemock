@@ -10,8 +10,10 @@ use Data::Dumper;
 our $VERSION = '0.01';
 
 our $SUBS;
-sub register_mocks {
+sub validate_mocks {
     my $mocks_data = shift;
+
+    my $new_mocks = {};
 
     NAMESPACE: foreach my $ns (keys %$mocks_data) {
 
@@ -26,7 +28,7 @@ sub register_mocks {
             SUBCALL: foreach my $subcall (@{ $mocks_data->{$ns}->{$sub}}) {
                 my $sha = generate_args_sha($subcall->{args});
                 my $returns = $subcall->{returns};
-                $SUBS->{$ns}->{$sub}->{$sha} = $returns;
+                $new_mocks->{SUBS}->{$ns}->{$sub}->{$sha} = $returns;
             }
 
             # alias the subroutine to the mock service
@@ -36,6 +38,7 @@ sub register_mocks {
             *{$sub_full_name} = sub { _get_return_value_for_args($ns, $sub, \@_) };
         }
     }
+    return $new_mocks;
 }
 
 sub _get_return_value_for_args {
@@ -44,10 +47,10 @@ sub _get_return_value_for_args {
 
     # if the sha is not found, use default value,
     # if no default value is found, die since a mock must be defined
-    my $returns = exists $SUBS->{$ns}->{$sub}->{$sha}
-                  ? $SUBS->{$ns}->{$sub}->{$sha}  
-                  : exists $SUBS->{$ns}->{$sub}->{'_default'}
-                    ? $SUBS->{$ns}->{$sub}->{'_default'}
+    my $returns = exists $SimpleMock::MOCKS->{SUBS}->{$ns}->{$sub}->{$sha}
+                  ? $SimpleMock::MOCKS->{SUBS}->{$ns}->{$sub}->{$sha}  
+                  : exists $SimpleMock::MOCKS->{SUBS}->{$ns}->{$sub}->{'_default'}
+                    ? $SimpleMock::MOCKS->{SUBS}->{$ns}->{$sub}->{'_default'}
                     : die "No mock found for $ns::$sub with args: " . Dumper($args);
 
     # if the return value is a code reference, call it with the args

@@ -39,7 +39,7 @@ our $VERSION = '0.01';
 
     sub connect {
         my $drh = shift;
-        if ($SimpleMock::Model::DBI::DBI_MOCKS->{_meta}->{connect_fail}) {
+        if ($SimpleMock::MOCKS->{DBI}->{_meta}->{connect_fail}) {
             # If connect_fail is set, we simulate a connection failure
             $drh->set_err(1000, "Database unavailable");
             return;
@@ -76,7 +76,7 @@ our $VERSION = '0.01';
         my ($dbh, $statement)= @_;
 
         # fail if prepare_fail META tag is set
-        if ($SimpleMock::Model::DBI::DBI_MOCKS->{_meta}->{prepare_fail}) {
+        if ($SimpleMock::MOCKS->{DBI}->{_meta}->{prepare_fail}) {
             return $dbh->set_err(1001, "Prepare failed");
         }
 
@@ -126,7 +126,7 @@ our $VERSION = '0.01';
 
     sub execute {
         my ($sth, @arg) = @_;
-        if ($SimpleMock::Model::DBI::DBI_MOCKS->{_meta}->{execute_fail}) {
+        if ($SimpleMock::MOCKS->{DBI}->{_meta}->{execute_fail}) {
             return $sth->set_err(1002, "Execute failed");
         }
         my $mock = SimpleMock::Model::DBI::_get_mock_for($sth->{Statement}, \@arg);

@@ -13,8 +13,6 @@ use SimpleMock::Util qw(
 
 our $VERSION = '0.01';
 
-our $DBI_MOCKS;
-
 our $drh = DBI->install_driver('SimpleMock');
 
 our @valid_global_meta_keys = (
@@ -42,14 +40,16 @@ sub _normalize_sql {
     return $sql;
 }
 
-sub register_mocks {
+sub validate_mocks {
     my $mocks_data = shift;
+
+    my $new_mocks = {};
 
     my $meta = $mocks_data->{META} || {};
     # only one option initially, but add more as needed
     META: foreach my $key (keys %$meta) {
         die "unknown meta key: $key" unless exists $valid_global_meta_keys_lookup{$key};
-        $DBI_MOCKS->{_meta}->{$key} = $meta->{$key};
+        $new_mocks->{DBI}->{_meta}->{$key} = $meta->{$key};
     }
 
     my $queries = $mocks_data->{QUERIES} || [];
@@ -65,17 +65,18 @@ sub register_mocks {
                 cols => $cols,
                 args => $result->{args} || [],
             };
-            $DBI_MOCKS->{$normalized_sql}->{$sha} = dclone($mock);
+            $new_mocks->{DBI}->{$normalized_sql}->{$sha} = dclone($mock);
         }
     }
+    return $new_mocks;
 }
 
 sub _get_mock_for {
     my ($sql, $args) = @_;
     my $normalized_sql = _normalize_sql($sql);
     my $sha = generate_args_sha($args);
-    my $mock = $DBI_MOCKS->{$normalized_sql}->{$sha} || $DBI_MOCKS->{$normalized_sql}->{'_default'};
-    unless ($mock->{data} || $DBI_MOCKS->{_meta}->{allow_unmocked_queries}) {
+    my $mock = $SimpleMock::MOCKS->{DBI}->{$normalized_sql}->{$sha} || $SimpleMock::MOCKS->{DBI}->{$normalized_sql}->{'_default'};
+    unless ($mock->{data} || $SimpleMock::MOCKS->{DBI}->{_meta}->{allow_unmocked_queries}) {
         die "No mock data found for query: '$normalized_sql' with args: " . Dumper($args);
     }
     $mock->{data} //= [[]];

@@ -12,8 +12,6 @@ use SimpleMock::Util qw(
 
 our $VERSION = '0.01';
 
-our $HTTP_MOCKS;
-
 sub mock_send_request {
     my ($request, $ua, $h) = @_;
     my $method = $request->method;
@@ -39,8 +37,8 @@ sub mock_send_request {
 
     # remove QS from URL before lookup
     $url =~ s/\?.*//;
-    my $response = $HTTP_MOCKS->{$url}->{$method}->{$args_sha} 
-                   || $HTTP_MOCKS->{$url}->{$method}->{_default};
+    my $response = $SimpleMock::MOCKS->{LWP}->{$url}->{$method}->{$args_sha} 
+                   || $SimpleMock::MOCKS->{LWP}->{$url}->{$method}->{_default};
 
     unless ($response) {
         die "No mock is defined (nor default with no args) for url ($url), method ($method), args: ". Dumper(\%request_args);
@@ -48,8 +46,10 @@ sub mock_send_request {
     return $response;
 }
 
-sub register_mocks {
+sub validate_mocks {
     my $mocks_data = shift;
+
+    my $new_mocks = {};
 
     URL: foreach my $url (keys %$mocks_data) {
         METHOD: foreach my $method (keys %{$mocks_data->{$url}}) {
@@ -72,10 +72,11 @@ sub register_mocks {
                                );
 
                 my $sha = generate_args_sha($mock->{args});   
-                $HTTP_MOCKS->{$url}->{$method}->{$sha} = $response;
+                $new_mocks->{LWP}->{$url}->{$method}->{$sha} = $response;
             }
         }
     }
+    return $new_mocks;
 }
 
 1;

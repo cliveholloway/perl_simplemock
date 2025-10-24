@@ -1,9 +1,7 @@
 use strict;
 use warnings;
 use Test::Most;
-use SimpleMock;
-
-use SimpleMock::Model::DBI;
+use SimpleMock qw(register_mocks);
 
 use DBI;
 
@@ -29,27 +27,29 @@ my $d4 = [
     [ 2, 'Diane', 'diane@testme.com' ],
 ];
 
-SimpleMock::Model::DBI::register_mocks({
-    QUERIES => [
-        {
-            sql => 'SELECT name, email FROM user WHERE name like=?',
-            results => [
-                { args => [ 'C%' ], data => $d1 },
-                # if you set a result with no args, it will be used as the default
-                { data => $d2 },
-            ],
-        },
-        {
-            sql => 'SELECT id, name, email FROM user WHERE name like=?',
-            # cols is only needed if using selectall_hashref etc
-            cols => [ 'id', 'name', 'email' ],
-            results => [
-                { args => [ 'C%' ], data => $d3 },
-                { args => [ 'D%' ], data => $d4 },
-            ],
-        },
-    ],
-});
+register_mocks(
+    DBI => {
+        QUERIES => [
+            {
+                sql => 'SELECT name, email FROM user WHERE name like=?',
+                results => [
+                    { args => [ 'C%' ], data => $d1 },
+                    # if you set a result with no args, it will be used as the default
+                    { data => $d2 },
+                ],
+            },
+            {
+                sql => 'SELECT id, name, email FROM user WHERE name like=?',
+                # cols is only needed if using selectall_hashref etc
+                cols => [ 'id', 'name', 'email' ],
+                results => [
+                    { args => [ 'C%' ], data => $d3 },
+                    { args => [ 'D%' ], data => $d4 },
+                ],
+            },
+        ],
+    },
+);
 
 # doesn't matter what we use here, as the mock will be used
 my $dbh = DBI->connect('dbi:SQLite:dbname=:memory:', '', '', { RaiseError => 1 });
@@ -108,37 +108,45 @@ is_deeply $result, { email => 'dave@testme.com', name => 'Dave', id => 1 }, 'sel
 # META field tests
 dies_ok { $dbh->do('SELECT unmocked query') } 'dies on unmocked query';
 # update the meta field to allow undefined queries to silently run
-SimpleMock::Model::DBI::register_mocks({
-  META => {
-    allow_unmocked_queries => 1,
-  },
-});
+register_mocks(
+    DBI => {
+        META => {
+            allow_unmocked_queries => 1,
+        },
+    },
+);
 lives_ok { $dbh->do('SELECT unmocked query') }  'doesn\'t die on unmocked query';
 
 # make all queries fail on execution
-SimpleMock::Model::DBI::register_mocks({
-    META => {
-        execute_fail => 1
-    }
-});
+register_mocks(
+    DBI => {
+        META => {
+            execute_fail => 1
+        },
+    },
+);
 $sth = $dbh->prepare('SELECT name, email FROM user where name like=?');
 dies_ok { $sth->execute('C%') } 'execute() fails as expected';
 
 # have the prepare fail
-SimpleMock::Model::DBI::register_mocks({
-    META => {
-        prepare_fail => 1,
-    }
-});
+register_mocks(
+    DBI => {
+        META => {
+            prepare_fail => 1,
+        },
+    },
+);
 dies_ok { $dbh->prepare('SELECT name, email FROM user where name like=?') }
   'META prepare_fail dies on prepare';
 
 # have the connect fail
-SimpleMock::Model::DBI::register_mocks({
-    META => {
-        connect_fail => 1,
-    }
-});
+register_mocks(
+    DBI => {
+        META => {
+            connect_fail => 1,
+        },
+    },
+);
 
 dies_ok { DBI->connect('dbi:SQLite:dbname=:memory:', '', '', { RaiseError => 1 }); }
   'META connect_fail w RaiseError dies';
@@ -148,11 +156,13 @@ ok ! DBI->connect('dbi:SQLite:dbname=:memory:', '', '', { RaiseError => 0 }),
 
 # die on bad META key
 dies_ok {
-    SimpleMock::Model::DBI::register_mocks({
-        META => {
-            bad_key => 1,
-        }
-    });
+    register_mocks(
+        DBI => {
+            META => {
+                bad_key => 1,
+            },
+        },
+    );
 } 'dies on bad META key';
 
 done_testing();

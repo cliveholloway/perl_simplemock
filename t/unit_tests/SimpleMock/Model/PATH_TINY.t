@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 use Test::Most;
-use SimpleMock;
+use SimpleMock qw(register_mocks);
 
 use Data::Dumper;
 
@@ -13,51 +13,53 @@ spread over
 multiple lines
 _END_
 
-SimpleMock::Model::PATH_TINY::register_mocks({
-    '/my/test/absolute/path/file.txt' => {
+SimpleMock::register_mocks(
+    PATH_TINY => {
+        '/my/test/absolute/path/file.txt' => {
 
-        # needed for file read calls
-        data => $sample_data,
-
-        # by default, assert is true, but you can override on a per mock
-        # (but not per assertion). If this is problematic it can be refactored later
-        assert=> 0,
-
-        # digest method is hard coded to whatever this value is
-        digest => '1a2b3c4d5e6f',
-
-        # set the 'exists' flag - defaults to true if not set
-        exists => 0,
-
-        # set the has_same_bytes flag (for all files - not mocked the functionality intyernally)
-        has_same_bytes => 1,
-
-        # return value for ->stat call (must be an arrayref and match 'stat' command return val
-        # (ie this is bad but valid for the test)
-        # ->lstat returns the same value
-        stat => [1,2,3,4],
-    },
-    '/my/test/absolute/path/file2.txt' => {
-        data => $sample_data,
-    },
-    # children are calculated from a regex on the file paths
-    '/my/test/dir' => {},
-    # empty mocks so that 'children' doesn't fail with 'No mock defined for path' 
-    # of course, you may not want to define these if you want the children call to throw
-    # note: must mark directories with the is_dir flag
-    '/my/test/dir/dir1' => {},
-    '/my/test/dir/dir2' => {},
-    '/my/test/dir/file1.txt' => {},
-    # not a child
-    '/my/test/dir/dir2/dir3' => {},
+            # needed for file read calls
+            data => $sample_data,
     
-    # copy file to this dir
-    '/copied' => {},
-
-    # realpath test
-    '/hello/dog/../there' => {},
-});
-
+            # by default, assert is true, but you can override on a per mock
+            # (but not per assertion). If this is problematic it can be refactored later
+            assert=> 0,
+    
+            # digest method is hard coded to whatever this value is
+            digest => '1a2b3c4d5e6f',
+    
+            # set the 'exists' flag - defaults to true if not set
+            exists => 0,
+    
+            # set the has_same_bytes flag (for all files - not mocked the functionality intyernally)
+            has_same_bytes => 1,
+    
+            # return value for ->stat call (must be an arrayref and match 'stat' command return val
+            # (ie this is bad but valid for the test)
+            # ->lstat returns the same value
+            stat => [1,2,3,4],
+        },
+        '/my/test/absolute/path/file2.txt' => {
+            data => $sample_data,
+        },
+        # children are calculated from a regex on the file paths
+        '/my/test/dir' => {},
+        # empty mocks so that 'children' doesn't fail with 'No mock defined for path' 
+        # of course, you may not want to define these if you want the children call to throw
+        # note: must mark directories with the is_dir flag
+        '/my/test/dir/dir1' => {},
+        '/my/test/dir/dir2' => {},
+        '/my/test/dir/file1.txt' => {},
+        # not a child
+        '/my/test/dir/dir2/dir3' => {},
+        
+        # copy file to this dir
+        '/copied' => {},
+    
+        # realpath test
+        '/hello/dog/../there' => {},
+    },
+);
+    
 use Path::Tiny;
 
 eval { use Unicode::UTF8; };
@@ -123,19 +125,19 @@ is_deeply \@p3_children, \@expected, "children()";
 throws_ok sub { $p2->children }, qr/Error opendir on/, "files can't have children()";
 
 # copy a file to a full name
-is $SimpleMock::Model::PATH_TINY::PATH_TINY_MOCKS{'/copied/file.txt'}, undef, "copied mock doesn't exist yet";
+is $SimpleMock::MOCKS->{PATH_TINY}->{'/copied/file.txt'}, undef, "copied mock doesn't exist yet";
 my $p4 = $p1->copy('/copied/new_file.txt');
-ok $SimpleMock::Model::PATH_TINY::PATH_TINY_MOCKS{'/copied/new_file.txt'}, "New mock created with full path";
-is_deeply $SimpleMock::Model::PATH_TINY::PATH_TINY_MOCKS{'/copied/new_file.txt'},
-          $SimpleMock::Model::PATH_TINY::PATH_TINY_MOCKS{'/my/test/absolute/path/file.txt'},
+ok $SimpleMock::MOCKS->{PATH_TINY}->{'/copied/new_file.txt'}, "New mock created with full path";
+is_deeply $SimpleMock::MOCKS->{PATH_TINY}->{'/copied/new_file.txt'},
+          $SimpleMock::MOCKS->{PATH_TINY}->{'/my/test/absolute/path/file.txt'},
           'copy() copied the mock to a file name';
 
 # copy to a directory
-is $SimpleMock::Model::PATH_TINY::PATH_TINY_MOCKS{'/copied/file2.txt'}, undef, "copied mock doesn't exist yet";
+is $SimpleMock::MOCKS->{PATH_TINY}->{'/copied/file2.txt'}, undef, "copied mock doesn't exist yet";
 my $p5 = $p2->copy('/copied');
-ok $SimpleMock::Model::PATH_TINY::PATH_TINY_MOCKS{'/copied/file2.txt'}, "New mock created in target dir";
-is_deeply $SimpleMock::Model::PATH_TINY::PATH_TINY_MOCKS{'/copied/file2.txt'},
-          $SimpleMock::Model::PATH_TINY::PATH_TINY_MOCKS{'/my/test/absolute/path/file2.txt'},
+ok $SimpleMock::MOCKS->{PATH_TINY}->{'/copied/file2.txt'}, "New mock created in target dir";
+is_deeply $SimpleMock::MOCKS->{PATH_TINY}->{'/copied/file2.txt'},
+          $SimpleMock::MOCKS->{PATH_TINY}->{'/my/test/absolute/path/file2.txt'},
           'copy() copied the mock to a directory';
 
 # digest
