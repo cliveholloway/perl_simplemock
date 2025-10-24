@@ -15,6 +15,7 @@ use SimpleMock::Util qw(
 
 our @EXPORT_OK = qw(
     register_mocks
+    clear_mocks
 );
 
 our $VERSION = '0.01';
@@ -79,6 +80,16 @@ sub _load_mocks_for {
     register_mocks(
         SUBS => $default_sub_mocks
     );
+}
+
+sub clear_mocks {
+    my @classes = @_;
+    if (@classes) {
+        delete $MOCKS->{$_} for (@classes);
+    }
+    else {
+        $MOCKS = {};
+    }
 }
 
 # override "require" to trigger loading of mocks

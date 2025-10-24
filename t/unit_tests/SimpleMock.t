@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 use Test::Most;
-use SimpleMock qw(register_mocks);
+use SimpleMock qw(register_mocks clear_mocks);
 # and then write your test as normal
 
 use TestModule;
@@ -103,6 +103,17 @@ is $response1->content, 'Example Content', 'LWP mock request for example.com';
 my $response2 = TestModule::fetch_url('http://test.com');
 is $response2->content, 'Test Content', 'LWP mock request for test.com';
 is $response2->code, 404, 'LWP mock request for test.com returns 404';
+
+
+
+# ALWAYS LEAVE THESE TESTS AT THE END
+# can clear one or all set mocks
+is scalar(keys %{$SimpleMock::MOCKS}), 3, "mock type count";
+clear_mocks('LWP');
+is scalar(keys %{$SimpleMock::MOCKS}), 2, "clear a class of mocks";
+clear_mocks();
+is_deeply $SimpleMock::MOCKS, {}, "clear all mocks";
+
 
 done_testing();
 
