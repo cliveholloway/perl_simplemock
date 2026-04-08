@@ -106,13 +106,60 @@ is $response2->code, 404, 'LWP mock request for test.com returns 404';
 
 
 
+################################################################################
+# register_mocks called twice for the same key overwrites (merge precedence)
+################################################################################
+register_mocks(
+    SUBS => {
+        TestModule => {
+            sub_three => [ { returns => 'overwritten' } ],
+        },
+    },
+);
+is TestModule::sub_three(), 'overwritten',
+    'register_mocks called twice for same key overwrites previous value';
+# original arg-specific mock is preserved (only the _default was overwritten)
+is TestModule::sub_three(1), 'one', 'arg-specific mock survives overwrite of default';
+
+################################################################################
+# _register_into_current_scope writes to top layer (not base layer)
+################################################################################
+{
+    my $guard = SimpleMock::register_mocks_scoped(
+        SUBS => { TestModule => { sub_three => [{ returns => 'layer1' }] } }
+    );
+    SimpleMock::_register_into_current_scope(
+        SUBS => { TestModule => { sub_three => [{ returns => 'current_scope' }] } }
+    );
+    is TestModule::sub_three(), 'current_scope',
+        '_register_into_current_scope writes to the current top layer';
+    # guard destroyed here, scoped layer removed
+}
+
+################################################################################
+# DEBUG_SIMPLEMOCK env var triggers _debug path
+################################################################################
+{
+    local $ENV{DEBUG_SIMPLEMOCK} = 1;
+    lives_ok {
+        register_mocks(
+            SUBS => { TestModule => { sub_three => [{ returns => 'debug_test' }] } }
+        );
+    } 'register_mocks with DEBUG_SIMPLEMOCK set does not die';
+}
+
+################################################################################
+# require without .pm extension triggers filename conversion in override
+################################################################################
+lives_ok { require 'TestModule' } 'require string without .pm extension lives';
+
 # ALWAYS LEAVE THESE TESTS AT THE END
 # can clear one or all set mocks
-is scalar(keys %{$SimpleMock::MOCKS}), 3, "mock type count";
+is scalar(keys %{$SimpleMock::MOCK_STACK[0]}), 3, "mock type count";
 clear_mocks('LWP');
-is scalar(keys %{$SimpleMock::MOCKS}), 2, "clear a class of mocks";
+is scalar(keys %{$SimpleMock::MOCK_STACK[0]}), 2, "clear a class of mocks";
 clear_mocks();
-is_deeply $SimpleMock::MOCKS, {}, "clear all mocks";
+is_deeply $SimpleMock::MOCK_STACK[0], {}, "clear all mocks";
 
 
 done_testing();

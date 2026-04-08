@@ -68,4 +68,37 @@ is $r4->content, 'Response for POST request with args', "POST request with args"
 my $r5 = $ua->get('http://example.com?foo3=bar3');
 is $r5->content, $r1->content, "GET request with unmatched args uses default";
 
+throws_ok { $ua->get('http://not-mocked.example.com') }
+    qr/No mock is defined/,
+    'die on completely unmocked URL';
+
+throws_ok { $ua->post('http://example.com', { foo => 'bar' }) }
+    qr/No mock is defined/,
+    'die on unmocked method for a mocked URL';
+
+################################################################################
+# Branch coverage for method fallthrough and layer traversal
+################################################################################
+
+# PUT request - falls through POST/GET branches, args treated as empty (_default sha)
+register_mocks(
+    LWP => {
+        'http://example.com/put-test' => {
+            'PUT' => [
+                { response => 'PUT response' },
+            ],
+        },
+    },
+);
+my $r_put = $ua->put('http://example.com/put-test');
+is $r_put->content, 'PUT response', 'PUT request returns mocked response';
+
+# scoped layer with no LWP key - _get_mock_for must traverse past it
+{
+    my $guard = SimpleMock::register_mocks_scoped();  # empty layer, no LWP key
+    my $r = $ua->get('http://example.com');
+    is $r->content, 'Response for GET request with no args',
+        '_get_mock_for traverses past scoped layer without LWP key';
+}
+
 done_testing();

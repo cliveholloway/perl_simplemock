@@ -82,7 +82,7 @@ All of these functions are exportable on request.
 
     my @subs = SimpleMock::Util::all_file_subs($file);
 
-Returns a list of all subroutine names defined in the given file. The file must be loaded in `%INC`.
+Returns a list of all subroutine names defined in the given file. The file must already be loaded and in %INC.
 
 =head2 generate_args_sha
 

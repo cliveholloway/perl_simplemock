@@ -39,7 +39,7 @@ our $VERSION = '0.01';
 
     sub connect {
         my $drh = shift;
-        if ($SimpleMock::MOCKS->{DBI}->{_meta}->{connect_fail}) {
+        if (SimpleMock::Model::DBI::_get_dbi_meta('connect_fail')) {
             # If connect_fail is set, we simulate a connection failure
             $drh->set_err(1000, "Database unavailable");
             return;
@@ -76,7 +76,7 @@ our $VERSION = '0.01';
         my ($dbh, $statement)= @_;
 
         # fail if prepare_fail META tag is set
-        if ($SimpleMock::MOCKS->{DBI}->{_meta}->{prepare_fail}) {
+        if (SimpleMock::Model::DBI::_get_dbi_meta('prepare_fail')) {
             return $dbh->set_err(1001, "Prepare failed");
         }
 
@@ -119,14 +119,15 @@ our $VERSION = '0.01';
     sub bind_param {
         my ($sth, $param, $value, $attr) = @_;
         $sth->{ParamValues}{$param} = $value;
-        $sth->{ParamAttr}{$param}   = $attr
-            if defined $attr; # attr is sticky if not explicitly set
+        if (defined $attr) {
+            # attr (SQL type hints) accepted but not used by mock driver
+        }
         return 1;
     }
 
     sub execute {
         my ($sth, @arg) = @_;
-        if ($SimpleMock::MOCKS->{DBI}->{_meta}->{execute_fail}) {
+        if (SimpleMock::Model::DBI::_get_dbi_meta('execute_fail')) {
             return $sth->set_err(1002, "Execute failed");
         }
         my $mock = SimpleMock::Model::DBI::_get_mock_for($sth->{Statement}, \@arg);
@@ -177,8 +178,8 @@ for a standalone usage example.
     use SimpleMock qw(register_mocks);
     use Module::To::Test;
     my $d1 = [
-        [ 'Clive', 'Clive@testme.com' ],
-        [ 'Colin', 'Colin@testme.com' ],
+        [ 'Clive', 'clive@testme.com' ],
+        [ 'Colin', 'colin@testme.com' ],
     ];
 
     my $d2 = [
@@ -199,6 +200,8 @@ for a standalone usage example.
                 {
                     sql => 'SELECT id, name, email FROM my_table WHERE name LIKE ?',
                     # each query can have multiple results defined based on placeholder values
+                    # note: the C%/D% in the args are literals on the actual args sent
+                    #       the code may be using a wild card, but the mocks are not aware of idea 
                     results -> [
                         { args => [ 'C%' ], data => $d1 },
                         { args => [ 'D%' ], data => $d2 },
@@ -271,6 +274,6 @@ These are the available flags you can set in the `META` section of your mocks re
 
 =back
 
-Note that if you set connect_fail, prepare_fail and execute_fail are moot at that point, so only enable one at a time as needed.
+Note that if you set connect_fail, prepare_fail & execute_fail are moot at that point, so best practice is to only enable each as needed by the test.
 
 =cut

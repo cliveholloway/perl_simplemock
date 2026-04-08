@@ -4,10 +4,6 @@ use warnings;
 use Carp qw(confess);
 use Storable qw(dclone);
 
-
-use Data::Dumper;
-
-
 our $VERSION = '0.01';
 
 require Path::Tiny;
@@ -31,20 +27,27 @@ my %formats = (
 );
 
 
+sub _get_path_mock {
+    my $path = shift;
+    for my $layer (reverse @SimpleMock::MOCK_STACK) {
+        return $layer->{PATH_TINY}{$path} if exists $layer->{PATH_TINY}{$path};
+    }
+    return undef;
+}
+
 my $orig_path = \&Path::Tiny::path;
-     
-# force DBI connect to use dbd:SimpleMock
+
 *Path::Tiny::path = sub {
     my @arg = @_;
-    confess "No mock defined for path $_[0]" unless $SimpleMock::MOCKS->{PATH_TINY}->{$_[0]}; 
+    confess "No mock defined for path $_[0]" unless _get_path_mock($_[0]);
     return $orig_path->(@arg);
 };
 
 *Path::Tiny::slurp = sub {
-    return $SimpleMock::MOCKS->{PATH_TINY}->{$_[0]}->{data};
+    return _get_path_mock($_[0])->{data};
 };
 
-# synonyms for now. TBD
+# synonyms for now. TBD if they need more customization
 *Path::Tiny::slurp_raw  = sub { &Path::Tiny::slurp; };
 *Path::Tiny::slurp_utf8 = sub { &Path::Tiny::slurp; };
 
@@ -63,7 +66,7 @@ my $orig_path = \&Path::Tiny::path;
 # assert defaults to true but can be overridden in mocks if needed
 *Path::Tiny::assert = sub {
     my $self = shift;
-    my $assert = $SimpleMock::MOCKS->{PATH_TINY}->{$self->[0]}->{assert};
+    my $assert = _get_path_mock($self->[0])->{assert};
     if (defined $assert) {
         $assert or Path::Tiny::Error->throw( "assert", $self->[0], "failed assertion" );
     }
@@ -77,7 +80,9 @@ my $orig_path = \&Path::Tiny::path;
     $self->is_dir
         or $self->_throw('opendir');
 
-    my @mock_paths = keys %{$SimpleMock::MOCKS->{PATH_TINY}};
+    my %all_paths;
+    $all_paths{$_} = 1 for map { keys %{ $_->{PATH_TINY} || {} } } @SimpleMock::MOCK_STACK;
+    my @mock_paths = keys %all_paths;
 
     my @children = grep { m|$path/[^/]*$| } @mock_paths;
     return sort map { Path::Tiny::path($_) } @children;
@@ -92,16 +97,17 @@ my $orig_path = \&Path::Tiny::path;
 
     # if target doesn't exist, assume it's a file
     # if it does, see if the target is a directory
-    my $target_path = defined $SimpleMock::MOCKS->{PATH_TINY}->{$dest_path}
-                      ? $SimpleMock::MOCKS->{PATH_TINY}->{$dest_path}->{data}
+    my $dest_mock   = _get_path_mock($dest_path);
+    my $target_path = defined $dest_mock
+                      ? $dest_mock->{data}
                         ? Path::Tiny::_path($dest_path)->[0]
                         : Path::Tiny::_path($dest_path, $self->basename)->[0]
                       : Path::Tiny::_path($dest_path)->[0];
 
     # now we have the copy, register it as a mock
-    SimpleMock::register_mocks(
+    SimpleMock::_register_into_current_scope(
         PATH_TINY => {
-            $target_path => $SimpleMock::MOCKS->{PATH_TINY}->{$source_path},
+            $target_path => _get_path_mock($source_path),
         },
     );
     my $copied = Path::Tiny::_path($target_path);
@@ -110,7 +116,7 @@ my $orig_path = \&Path::Tiny::path;
 *Path::Tiny::digest = sub {
     my $self = shift;
     my $path = $self->[0];
-    my $digest = $SimpleMock::MOCKS->{PATH_TINY}->{$path}->{digest}
+    my $digest = _get_path_mock($path)->{digest}
         or die "'digest' attribute must be defined for '$path' mock";
     return $digest;
 };
@@ -125,21 +131,21 @@ my $orig_path = \&Path::Tiny::path;
 
 *Path::Tiny::exists = sub {
     my $self = shift;
-    my $exists = $SimpleMock::MOCKS->{PATH_TINY}->{$self->[0]}->{exists};
+    my $exists = _get_path_mock($self->[0])->{exists};
     return defined $exists
            ? $exists
-           : 1; 
+           : 1;
 };
 
 *Path::Tiny::is_file = sub {
     my $path = $_[0]->[0];
-    return $SimpleMock::MOCKS->{PATH_TINY}->{$path}->{data}
+    return _get_path_mock($path)->{data}
            ? 1 : 0;
 };
 
 *Path::Tiny::is_dir = sub {
     my $path = $_[0]->[0];
-    return $SimpleMock::MOCKS->{PATH_TINY}->{$path}->{data}
+    return _get_path_mock($path)->{data}
            ? 0 : 1;
 };
 
@@ -149,7 +155,7 @@ my $orig_path = \&Path::Tiny::path;
 # target file does not need to be mocked. This is just an attribute of the mock object
 *Path::Tiny::has_same_bytes = sub {
     my $path = $_[0]->[0];
-    return $SimpleMock::MOCKS->{PATH_TINY}->{$path}->{has_same_bytes};
+    return _get_path_mock($path)->{has_same_bytes};
 };
 
 # not a full path iterator - only iterates through current directory
@@ -160,13 +166,13 @@ my $orig_path = \&Path::Tiny::path;
     my @children = shift->children;
     return sub {
         shift @children;
-    }  
+    }
 };
 *Path::Tiny::lines = sub {
     my $self    = shift;
     my $args    = Path::Tiny::_get_args( shift, qw/binmode chomp count/ );
     my $path = $self->[0];
-    my @lines = map { "$_\n" } split /\n/, $SimpleMock::MOCKS->{PATH_TINY}->{$path}->{data};
+    my @lines = map { "$_\n" } split /\n/, _get_path_mock($path)->{data};
     chomp(@lines) if $args->{chomp};
     my $count = $args->{count};
     my @ret = $count
@@ -174,8 +180,8 @@ my $orig_path = \&Path::Tiny::path;
            : @lines;
     return @ret;
 };
-*Path::Tiny::lines_raw = sub { &lines; };
-*Path::Tiny::lines_utf8 = sub { &lines; };
+*Path::Tiny::lines_raw = sub { &Path::Tiny::lines; };
+*Path::Tiny::lines_utf8 = sub { &Path::Tiny::lines; };
 
 # just succeed for now - can tweak later if use case exists
 *Path::Tiny::mkdir = sub { shift };
@@ -193,7 +199,7 @@ my $orig_path = \&Path::Tiny::path;
 *Path::Tiny::remove_tree = sub { 1 };
 *Path::Tiny::size= sub {
     my $path = $_[0]->[0];
-    return length($SimpleMock::MOCKS->{PATH_TINY}->{$path}->{data});
+    return length(_get_path_mock($path)->{data});
 };
 
 # note: not tested _human_size    , but I think 't's OK
@@ -210,9 +216,9 @@ my $orig_path = \&Path::Tiny::path;
 # _formats only used in tests - ignore
 
 # hard code in data if needed
-*Path::Tiny::stat = sub { 
+*Path::Tiny::stat = sub {
     my $path = $_[0]->[0];
-    my $stat = $SimpleMock::MOCKS->{PATH_TINY}->{$path}->{stat};
+    my $stat = _get_path_mock($path)->{stat};
     defined $stat or die "stat must be defined in mock for $path";
     ref $stat eq 'ARRAY' or die "stat muct be defined as an arrayref for $path";
     return $stat;
@@ -239,7 +245,7 @@ It currently doesn't mock everything, but covers a lot of use cases.
 
 I don't have any production code using this module, so I've written what I think are core mocks.
 If you have a specific use case that could do with mocking, or spot issues that affect usage,
-please send me an example and I'll update (ideally include a failing test!): <clive.holloway@gmail.com>
+please implement via a pull request (or just request it and I'll implement when I have time)
 
 =head1 USAGE
 
@@ -255,13 +261,13 @@ please send me an example and I'll update (ideally include a failing test!): <cl
                 # these are all true by default, but you can set to false for them to throw
                 # or return false as noted
                 assert => 0,              # throws
-                exists => 0,              # return 0 
+                exists => 0,              # return 0
                 has_same_bytes => 0,      # return 0 - value is hard coded for ALL conmparisons on a mock
-    
+
                 # returns this hard coded value for the stat - set as appropriate (obviously fake below)
                 stat => [1,2,3,4],
 
-                # digest hash for the mock. Set ass appropriate if calling digest()
+                # digest hash for the mock. Set as appropriate if calling digest()
                 digest => '1a2b3c4d536f',
             },
         }
@@ -303,7 +309,7 @@ All calls on the mock to exists() return true by default. If you set this to 0, 
 
 =head2 has_same_bytes
 
-All calls on the mock to has_same_bytes() return true by default. If you set this to 0, it returns a false value. 
+All calls on the mock to has_same_bytes() return true by default. If you set this to 0, it returns a false value.
 
 =head2 stat
 
@@ -352,7 +358,7 @@ If someone wants to add in functionality for it to work in Windows, please do.
 
 =head2 No recursion mocking
 
-`iterator` does NOT recurse child directories. If the flag is set, an exception is thrown. 
+`iterator` does NOT recurse child directories. If the flag is set, an exception is thrown.
 
 `visit` uses `iterator`, so an exception is thrown if you set the `recurse` argument.
 

@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 use Test::Most;
-use SimpleMock qw(register_mocks);
+use SimpleMock qw(register_mocks clear_mocks);
 use TestModule;
 
 use SimpleMock::Model::SUBS;
@@ -61,5 +61,22 @@ my @s6 = TestModule::sub_six(5);
 is_deeply \@s6, [5, 10], 'wantarray mock array';
 my $s6 = TestModule::sub_six(5);
 is $s6, 10, 'wantarray mock scalar';
+
+################################################################################
+# Die behaviour when no mock matches
+################################################################################
+clear_mocks();
+register_mocks(
+    SUBS => {
+        TestModule => {
+            sub_one => [
+                { args => ['expected'], returns => 'matched' },
+                # no default — unmatched args must die
+            ],
+        },
+    },
+);
+is   TestModule::sub_one('expected'),  'matched', 'specific-arg mock matches correctly';
+dies_ok { TestModule::sub_one('unexpected') } 'dies when args have no match and no default';
 
 done_testing();

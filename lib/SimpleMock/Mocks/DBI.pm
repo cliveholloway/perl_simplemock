@@ -23,6 +23,6 @@ SimpleMock::Mocks::DBI - Mock DBI module for testing
 =head1 DESCRIPTION
 
 This module mocks the connect method of the DBI module to force it to use a
-SimpleMock database connection.
+dbi:SimpleMock database connection.
 
 =cut

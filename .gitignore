@@ -1,6 +1,8 @@
 .proverc
+cover_db/
 /Makefile
 /blib/
+pm_to_blib
 /Build
 /MYMETA.*
 *.o

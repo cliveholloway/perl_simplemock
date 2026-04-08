@@ -9,7 +9,8 @@ use Data::Dumper;
 
 our $VERSION = '0.01';
 
-our $SUBS;
+our %DELEGATED;
+
 sub validate_mocks {
     my $mocks_data = shift;
 
@@ -20,7 +21,7 @@ sub validate_mocks {
         # the module should already be loaded, but doesn't have to be
         eval {
             my $file = file_from_namespace($ns);
-            require $file; 
+            require $file;
         };
         $@ and die "Cannot load $ns - $@";
 
@@ -31,11 +32,15 @@ sub validate_mocks {
                 $new_mocks->{SUBS}->{$ns}->{$sub}->{$sha} = $returns;
             }
 
-            # alias the subroutine to the mock service
-            my $sub_full_name = $ns . '::' . $sub;
-            no strict 'refs'; ## no critic
-            no warnings 'redefine';
-            *{$sub_full_name} = sub { _get_return_value_for_args($ns, $sub, \@_) };
+            # alias the subroutine to the mock service — only once per sub
+            my $key = "$ns\::$sub";
+            unless ($DELEGATED{$key}) {
+                $DELEGATED{$key} = 1;
+                my $sub_full_name = $ns . '::' . $sub;
+                no strict 'refs'; ## no critic
+                no warnings 'redefine';
+                *{$sub_full_name} = sub { _get_return_value_for_args($ns, $sub, \@_) };
+            }
         }
     }
     return $new_mocks;
@@ -45,26 +50,24 @@ sub _get_return_value_for_args {
     my ($ns, $sub, $args) = @_;
     my $sha = generate_args_sha($args);
 
-    # if the sha is not found, use default value,
-    # if no default value is found, die since a mock must be defined
-    my $returns = exists $SimpleMock::MOCKS->{SUBS}->{$ns}->{$sub}->{$sha}
-                  ? $SimpleMock::MOCKS->{SUBS}->{$ns}->{$sub}->{$sha}  
-                  : exists $SimpleMock::MOCKS->{SUBS}->{$ns}->{$sub}->{'_default'}
-                    ? $SimpleMock::MOCKS->{SUBS}->{$ns}->{$sub}->{'_default'}
-                    : die "No mock found for $ns::$sub with args: " . Dumper($args);
+    for my $layer (reverse @SimpleMock::MOCK_STACK) {
+        my $mock_sub = $layer->{SUBS}{$ns}{$sub} or next;
 
-    # if the return value is a code reference, call it with the args
-    # else return literal value
-    return ref($returns) eq 'CODE'
-           ? $returns->(@$args)
-           : $returns;
+        # if no specific-args match, use layer _default, if exists
+        my $returns = exists $mock_sub->{$sha}      ? $mock_sub->{$sha}
+                    : exists $mock_sub->{'_default'} ? $mock_sub->{'_default'}
+                    : next;   # nothing in this layer for this sub, keep looking down
+        return ref($returns) eq 'CODE' ? $returns->(@$args) : $returns;
+    }
+
+    die "No mock found for $ns\::$sub with args: " . Dumper($args);
 }
 
 1;
 
 =head1 NAME
 
-SimpleMock::Model::SUBS - A module to register and handle mock subroutines.
+SimpleMock::Model::SUBS
 
 =head1 DESCRIPTION
 
@@ -98,34 +101,16 @@ module in your tests instead:
                       returns => sub { my ($arg1, $arg2) = @_; return int(rand(10))+1; } },
 
                     # return value for any other args
-                    { returns => 'returns for all other args'; } },
+                    # you can use a subref here (as above) for a more powerful default,
+                    # or just return a static value
+                    { returns => sub {my ($arg1, $arg2) = @_; return $arg1+$arg2 } },
                 ],
             },
         },
     });
 
-The structure of the subs mock call is as follows:
-
-    register_mocks({
-        SUBS => {
-            'Namespace' => {
-                'sub_name' => [
-
-                    # for specific args, returns a specific value
-                    { args => [$arg1, $arg2], returns => 'return value for these args' },
-
-                    # for specific args, run the code reference with the supplied args
-                    { args => [$arg1, $arg2], returns => sub { my ($arg1, $arg2) = @_; ... } },
-
-                    # if args are omitted, the return value is used as a catchall
-                    { returns => 'default return value for all other args' },
-                ],
-            },
-        },
-    });
-
-If the catchall is omitted, the sub call will die if the args sent do not match
-any of the defined mocks.
+If the catchall (returns with no args) is omitted, the sub call will die if the args
+sent do not match any of the defined mocks.
 
 The return value can be a literal value, or a code reference. If it is a code
 reference, it will be called with the args passed to the subroutine. This is

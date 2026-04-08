@@ -32,6 +32,55 @@ sub validate_mocks {
     return $new_mocks;
 }
 
-
 1;
 
+=head1 NAME
+
+SimpleMock::Model::PATH_TINY
+
+=head1 DESCRIPTION
+
+This module allows you to register mocks for Path::Tiny
+
+=head1 USAGE
+
+You probably won't use this module directly. Instead, you will use the `SimpleMock` module to register your mocks. Here's an example of how to do that:
+
+    use SimpleMock qw(register_mocks);
+
+    register_mocks({
+        PATH_TINY => {
+            '/path/to/dir/pr/file' => {
+
+                # if data is set, it's implicitly a file, otherwise it's a directory
+                data => $file_content,
+
+                # these are all true by default, but you can set to false for them to throw
+                # or return false as noted
+                assert => 0,              # throws
+                exists => 0,              # return 0
+                has_same_bytes => 0,      # return 0 - value is hard coded for ALL conmparisons on a mock
+
+                # returns this hard coded value for the stat - set as appropriate (obviously fake below)
+                stat => [1,2,3,4],
+
+                # digest hash for the mock. Set as appropriate if calling digest()
+                digest => '1a2b3c4d536f',
+            },
+        }
+    });
+
+For basic usage, you just need this:
+
+    register_mocks({
+        PATH_TINY => {
+
+            # file MUST have a data attribute
+            '/path/to/file.txt' => { data => 'file content' },
+
+            # direcory must NOT have a data attribute
+            '/path/to/dir' => {},
+        }
+    });
+
+=cut

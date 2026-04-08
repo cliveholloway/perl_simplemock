@@ -105,7 +105,78 @@ is_deeply
 $result = $dbh->selectrow_hashref('SELECT id, name, email FROM user where name like=?', undef, 'D%');
 is_deeply $result, { email => 'dave@testme.com', name => 'Dave', id => 1 }, 'selectrow_hashref';
 
+################################################################################
+# DBD::SimpleMock coverage tests
+################################################################################
+
+# driver() caching - calling twice should return the same cached handle
+{
+    my $drh1 = DBD::SimpleMock->driver;
+    my $drh2 = DBD::SimpleMock->driver;
+    is $drh1, $drh2, 'driver() returns cached $drh on second call';
+}
+
+# get_info
+is $dbh->get_info(29),  '"', 'get_info(29) returns quote char';
+is $dbh->get_info(999), undef, 'get_info(other type) returns undef';
+
+# ping
+is $dbh->ping, 1, 'ping returns 1';
+
+# db FETCH
+lives_ok { $dbh->{AutoCommit} } 'FETCH on dbh attribute lives';
+
+# STORE AutoCommit=0 croaks; use fresh dbh to avoid side-effects on $dbh
+{
+    my $test_dbh = DBI->connect('dbi:SQLite:dbname=:memory:', '', '', { RaiseError => 1 });
+    throws_ok { $test_dbh->STORE('AutoCommit', 0) }
+        qr/Can't disable AutoCommit/,
+        'STORE AutoCommit=>0 croaks';
+}
+
+# disconnect
+{
+    my $d_dbh = DBI->connect('dbi:SQLite:dbname=:memory:', '', '', { RaiseError => 1 });
+    lives_ok { $d_dbh->disconnect } 'disconnect succeeds';
+}
+
+# bind_param without attr
+{
+    my $bp_sth = $dbh->prepare('SELECT name, email FROM user where name like=?');
+    ok $bp_sth->bind_param(1, 'C%'), 'bind_param without attr returns true';
+    is_deeply $bp_sth->{ParamValues}, { 1 => 'C%' }, 'bind_param stores ParamValues';
+
+    # bind_param with attr — covers the 'if defined $attr' branch body
+    ok $bp_sth->bind_param(1, 'D%', { TYPE => 12 }), 'bind_param with attr returns true';
+    is_deeply $bp_sth->{ParamValues}, { 1 => 'D%' }, 'bind_param with attr updates ParamValues';
+}
+
+# query with no results key - should silently iterate over empty list
+lives_ok {
+    register_mocks(
+        DBI => {
+            QUERIES => [
+                { sql => 'SELECT no_results_key' },
+            ],
+        },
+    );
+} 'query without results key is accepted';
+
+# scoped mock layer with no DBI key - _get_mock_for must traverse past it
+{
+    my $guard = SimpleMock::register_mocks_scoped(
+        SUBS => { TestModule => { sub_one => [{ returns => 'scoped' }] } }
+    );
+    my $result = $dbh->selectrow_arrayref(
+        'SELECT name, email FROM user where name like=?', undef, 'C%'
+    );
+    is_deeply $result, $d1->[0],
+        '_get_mock_for traverses past scoped layer without DBI key';
+}
+
+################################################################################
 # META field tests
+################################################################################
 dies_ok { $dbh->do('SELECT unmocked query') } 'dies on unmocked query';
 # update the meta field to allow undefined queries to silently run
 register_mocks(

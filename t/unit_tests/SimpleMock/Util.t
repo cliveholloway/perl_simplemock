@@ -35,6 +35,14 @@ is namespace_from_file('TestModule/Util.pm'), 'TestModule::Util',
 is file_from_namespace('TestModule::Util'), 'TestModule/Util.pm',
     'file_from_namespace() returns the correct file path';
 
+throws_ok { all_file_subs('NotLoaded.pm') }
+    qr/File NotLoaded\.pm not loaded/,
+    'all_file_subs() dies on unloaded file';
+
+throws_ok { generate_args_sha([1, 2], 'extra') }
+    qr/does not take a second argument/,
+    'generate_args_sha() dies when called with more than one argument';
+
 done_testing();
 
 1;

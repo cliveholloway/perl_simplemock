@@ -3,17 +3,13 @@ use warnings;
 use Test::Most;
 use SimpleMock qw(register_mocks);
 
-use Data::Dumper;
-
-use SimpleMock::Model::PATH_TINY;
-
 my $sample_data = <<'_END_';
 This is a test file
 spread over
 multiple lines
 _END_
 
-SimpleMock::register_mocks(
+register_mocks(
     PATH_TINY => {
         '/my/test/absolute/path/file.txt' => {
 
@@ -125,19 +121,19 @@ is_deeply \@p3_children, \@expected, "children()";
 throws_ok sub { $p2->children }, qr/Error opendir on/, "files can't have children()";
 
 # copy a file to a full name
-is $SimpleMock::MOCKS->{PATH_TINY}->{'/copied/file.txt'}, undef, "copied mock doesn't exist yet";
+is $SimpleMock::MOCK_STACK[0]->{PATH_TINY}->{'/copied/file.txt'}, undef, "copied mock doesn't exist yet";
 my $p4 = $p1->copy('/copied/new_file.txt');
-ok $SimpleMock::MOCKS->{PATH_TINY}->{'/copied/new_file.txt'}, "New mock created with full path";
-is_deeply $SimpleMock::MOCKS->{PATH_TINY}->{'/copied/new_file.txt'},
-          $SimpleMock::MOCKS->{PATH_TINY}->{'/my/test/absolute/path/file.txt'},
+ok $SimpleMock::MOCK_STACK[0]->{PATH_TINY}->{'/copied/new_file.txt'}, "New mock created with full path";
+is_deeply $SimpleMock::MOCK_STACK[0]->{PATH_TINY}->{'/copied/new_file.txt'},
+          $SimpleMock::MOCK_STACK[0]->{PATH_TINY}->{'/my/test/absolute/path/file.txt'},
           'copy() copied the mock to a file name';
 
 # copy to a directory
-is $SimpleMock::MOCKS->{PATH_TINY}->{'/copied/file2.txt'}, undef, "copied mock doesn't exist yet";
+is $SimpleMock::MOCK_STACK[0]->{PATH_TINY}->{'/copied/file2.txt'}, undef, "copied mock doesn't exist yet";
 my $p5 = $p2->copy('/copied');
-ok $SimpleMock::MOCKS->{PATH_TINY}->{'/copied/file2.txt'}, "New mock created in target dir";
-is_deeply $SimpleMock::MOCKS->{PATH_TINY}->{'/copied/file2.txt'},
-          $SimpleMock::MOCKS->{PATH_TINY}->{'/my/test/absolute/path/file2.txt'},
+ok $SimpleMock::MOCK_STACK[0]->{PATH_TINY}->{'/copied/file2.txt'}, "New mock created in target dir";
+is_deeply $SimpleMock::MOCK_STACK[0]->{PATH_TINY}->{'/copied/file2.txt'},
+          $SimpleMock::MOCK_STACK[0]->{PATH_TINY}->{'/my/test/absolute/path/file2.txt'},
           'copy() copied the mock to a directory';
 
 # digest
@@ -172,8 +168,15 @@ is $count, 3, 'iterator count';
 
 throws_ok sub { $p3->iterator({ recurse => 1 }); }, qr/'recurse' is not supported on iterator/, "Iterator mock doesn't support 'recurse' arg";
 
-my @lines = $p1->lines;
-is @lines, 3, "line count";
+my @lines = $p1->lines_raw;
+is @lines, 3, "lines_raw line count";
+is $lines[0], "This is a test file\n", "lines_raw first line";
+
+@lines = $p1->lines_utf8;
+is @lines, 3, "lines_utf8 line count";
+is $lines[0], "This is a test file\n", "lines_utf8 first line";
+
+@lines = $p1->lines;
 is $lines[0], "This is a test file\n", "first line";
 
 @lines = $p1->lines({ count => 1 });
@@ -201,6 +204,127 @@ throws_ok sub { $p2->stat }, qr/stat must be defined in mock/, "No stat attr in 
 
 is_deeply $p1->stat, $p1->lstat, 'lstat is a stat alias';
 
+# stat with non-ARRAY stat value dies
+register_mocks(
+    PATH_TINY => {
+        '/bad/stat/file.txt' => { data => 'foo', stat => 'scalar_stat' },
+    },
+);
+throws_ok { path('/bad/stat/file.txt')->stat }
+    qr/arrayref/,
+    'stat with non-ARRAY value dies';
 
+################################################################################
+# Model::PATH_TINY validate_mocks branch coverage
+################################################################################
+
+# children key implies is_dir automatically
+register_mocks(
+    PATH_TINY => {
+        '/implicit/dir' => { children => ['/implicit/dir/child.txt'] },
+    },
+);
+ok path('/implicit/dir')->is_dir, 'path with children key is implicitly a directory';
+
+# invalid boolean value for a t_f key dies
+throws_ok {
+    register_mocks(
+        PATH_TINY => {
+            '/bad/bool/path' => { exists => 'yes' },
+        },
+    );
+} qr/Invalid value for key/, 'invalid boolean value for t_f key dies';
+
+################################################################################
+# Mocks::Path::Tiny uncovered subroutine coverage
+################################################################################
+
+# append / append_raw / append_utf8 are no-ops
+ok $p1->append('data'),      'append returns true';
+ok $p1->append_raw('data'),  'append_raw returns true';
+ok $p1->append_utf8('data'), 'append_utf8 returns true';
+
+# edit family are no-ops
+lives_ok { $p1->edit(sub {})            } 'edit lives';
+lives_ok { $p1->edit_utf8(sub {})       } 'edit_utf8 lives';
+lives_ok { $p1->edit_raw(sub {})        } 'edit_raw lives';
+lives_ok { $p1->edit_lines(sub {})      } 'edit_lines lives';
+lives_ok { $p1->edit_lines_utf8(sub {}) } 'edit_lines_utf8 lives';
+lives_ok { $p1->edit_lines_raw(sub {})  } 'edit_lines_raw lives';
+
+# filehandle dies
+throws_ok { $p1->filehandle } qr/Not implemented/, 'filehandle throws Not implemented';
+
+# mkdir returns self
+is_deeply $p1->mkdir, $p1, 'mkdir returns self';
+
+# mkpath dies
+throws_ok { $p1->mkpath } qr/Deprecated/, 'mkpath throws Deprecated';
+
+# remove / remove_tree return 1
+is $p1->remove,      1, 'remove returns 1';
+is $p1->remove_tree, 1, 'remove_tree returns 1';
+
+# touch / touchpath return self
+is_deeply $p1->touch,     $p1, 'touch returns self';
+is_deeply $p1->touchpath, $p1, 'touchpath returns self';
+
+# size_human with default (ls) format
+register_mocks(
+    PATH_TINY => {
+        '/size/test/file.txt' => { data => 'x' x 512 },
+    },
+);
+my $sz_path = path('/size/test/file.txt');
+like $sz_path->size_human, qr/\d/, 'size_human returns a numeric value';
+
+# size_human with explicit valid format
+like $sz_path->size_human({ format => 'iec' }), qr/\d/, 'size_human with iec format';
+
+# size_human with invalid format dies
+throws_ok { $sz_path->size_human({ format => 'invalid' }) }
+    qr/Invalid format/,
+    'size_human with invalid format dies';
+
+# cwd without env var dies
+{
+    local $ENV{PATH_TINY_CWD};
+    throws_ok { Path::Tiny->cwd } qr/PATH_TINY_CWD/, 'cwd without env var dies';
+}
+
+# assert with assert => 1 (defined and true — should not throw)
+register_mocks(
+    PATH_TINY => {
+        '/assert/true/file.txt' => { data => 'hello', assert => 1 },
+    },
+);
+{
+    my $pa = path('/assert/true/file.txt');
+    is_deeply $pa->assert(sub {}), $pa, 'assert with assert=>1 returns self';
+}
+
+# copy to a destination that already has data (file mock, not directory)
+register_mocks(
+    PATH_TINY => {
+        '/copy/dest/existing.txt' => { data => 'old data' },
+    },
+);
+$p1->copy('/copy/dest/existing.txt');
+ok $SimpleMock::MOCK_STACK[0]->{PATH_TINY}->{'/copy/dest/existing.txt'},
+    'copy to file dest keeps file path (not appending basename)';
+
+# move to a non-directory path (F branch of -d $dest)
+{
+    my $moved = $p1->move('/moved/file.txt');
+    isa_ok $moved, 'Path::Tiny', 'move to non-dir returns Path::Tiny object';
+    is $moved->[0], '/moved/file.txt', 'move to non-dir returns dest path';
+}
+
+# move to a real directory (T branch of -d $dest) — /tmp should exist on all platforms
+{
+    my $moved = $p1->move('/tmp');
+    isa_ok $moved, 'Path::Tiny', 'move to dir returns Path::Tiny object';
+    like $moved->[0], qr{/tmp/}, 'move to dir appends basename';
+}
 
 done_testing();

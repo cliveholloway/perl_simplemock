@@ -37,13 +37,15 @@ sub mock_send_request {
 
     # remove QS from URL before lookup
     $url =~ s/\?.*//;
-    my $response = $SimpleMock::MOCKS->{LWP}->{$url}->{$method}->{$args_sha} 
-                   || $SimpleMock::MOCKS->{LWP}->{$url}->{$method}->{_default};
 
-    unless ($response) {
-        die "No mock is defined (nor default with no args) for url ($url), method ($method), args: ". Dumper(\%request_args);
+    for my $layer (reverse @SimpleMock::MOCK_STACK) {
+        my $lwp = $layer->{LWP} or next;
+        my $response = $lwp->{$url}->{$method}->{$args_sha}
+                    || $lwp->{$url}->{$method}->{_default};
+        return $response if $response;
     }
-    return $response;
+
+    die "No mock is defined (nor default with no args) for url ($url), method ($method), args: " . Dumper(\%request_args);
 }
 
 sub validate_mocks {
@@ -83,7 +85,7 @@ sub validate_mocks {
 
 =head1 NAME
 
-SimpleMock::Model::LWP - A module to mock LWP HTTP requests in tests
+SimpleMock::Model::LWP
 
 =head1 DESCRIPTION
 

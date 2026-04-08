@@ -3,7 +3,6 @@ use strict;
 use warnings;
 use DBI;
 use DBD::Mock;
-use Scalar::Util qw(blessed);
 use Storable qw(dclone);
 use Data::Dumper;
 
@@ -19,15 +18,16 @@ our @valid_global_meta_keys = (
     # 0|1 allow queries that are not mocked to run with a default empty result set
     'allow_unmocked_queries',
 
-    # 0|1 if true, then $sth->execute returns undef (use for error checking tests)
-    'execute_fail',
-
     # 0|1 if true, then $dbh->connect returns undef (use for error checking tests)
     'connect_fail',
 
     # 0|1 if true, then $dbh->prepare fails with invalid SQL error
     'prepare_fail',
+
+    # 0|1 if true, then $sth->execute returns undef (use for error checking tests)
+    'execute_fail',
 );
+
 our %valid_global_meta_keys_lookup;
 undef @valid_global_meta_keys_lookup{ @valid_global_meta_keys };
 
@@ -71,17 +71,32 @@ sub validate_mocks {
     return $new_mocks;
 }
 
+sub _get_dbi_meta {
+    my $key = shift;
+    for my $layer (reverse @SimpleMock::MOCK_STACK) {
+        return $layer->{DBI}{_meta}{$key}
+            if exists $layer->{DBI}{_meta}{$key};
+    }
+    return undef;
+}
+
 sub _get_mock_for {
     my ($sql, $args) = @_;
-    my $normalized_sql = _normalize_sql($sql);
-    my $sha = generate_args_sha($args);
-    my $mock = $SimpleMock::MOCKS->{DBI}->{$normalized_sql}->{$sha} || $SimpleMock::MOCKS->{DBI}->{$normalized_sql}->{'_default'};
-    unless ($mock->{data} || $SimpleMock::MOCKS->{DBI}->{_meta}->{allow_unmocked_queries}) {
-        die "No mock data found for query: '$normalized_sql' with args: " . Dumper($args);
-    }
-    $mock->{data} //= [[]];
+    my $normalized = _normalize_sql($sql);
+    my $sha        = generate_args_sha($args);
 
-    return dclone($mock);
+    for my $layer (reverse @SimpleMock::MOCK_STACK) {
+        my $dbi = $layer->{DBI} or next;
+        my $mock = $dbi->{$normalized}{$sha} || $dbi->{$normalized}{'_default'};
+        return dclone($mock) if $mock;
+    }
+
+    # allow_unmocked_queries can be set in any layer
+    for my $layer (reverse @SimpleMock::MOCK_STACK) {
+        return dclone({ data => [[]] }) if $layer->{DBI}{_meta}{allow_unmocked_queries};
+    }
+
+    die "No mock data found for '$normalized' with args: " . Dumper($args);
 }
 
 1;
@@ -95,8 +110,8 @@ SimpleMock::Model::DBI - A mock model for DBI queries
 This module provides a mock model for DBI queries, allowing you to register
 mock queries and their results. It normalizes queries and handles argument-based mocking.
 
-Meta data can be set to control behavior such as allowing unmocked queries, or to force
-failure on certain operations like i`prepare`, `execute` or `connect`.
+Metadata can be set to control behavior such as allowing unmocked queries, or to force
+failure on certain operations like `prepare`, `execute` or `connect`.
 
 =head1 USAGE
 
@@ -110,7 +125,7 @@ module in your tests instead:
             QUERIES => [
                 {
                     sql => 'SELECT name, email FROM users WHERE id = ?',
-                    results => [ 
+                    results => [
 
                         # specific result data for arg sent
                         { args => [1],
@@ -129,8 +144,8 @@ module in your tests instead:
         },
     });
 
-For each query, specify the SQL statement, the expected arguments, and the data to return.
-
-If you omit the `args` field, it will return this data for any arguments that do not match.
+For each query, specify the SQL statement. Then, in the reults array, provide the 
+placeholder args and data to return for each, and an optional default result that only
+has a data element to use as a default for query executions where there is no args match
 
 =cut
