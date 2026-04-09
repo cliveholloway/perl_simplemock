@@ -1,6 +1,8 @@
 # Start all Simplemock tests with these 4 lines!
 use strict;
 use warnings;
+use FindBin;
+use lib "$FindBin::Bin/../lib";
 use Test::Most;
 use SimpleMock qw(register_mocks clear_mocks);
 # and then write your test as normal

@@ -16,7 +16,9 @@
    "no_index" : {
       "directory" : [
          "t",
-         "inc"
+         "inc",
+         "t",
+         "cover_db"
       ]
    },
    "prereqs" : {
@@ -31,17 +33,43 @@
          }
       },
       "runtime" : {
-         "requires" : {
-            "Cwd" : "0",
+         "recommends" : {
             "DBI" : "0",
-            "FindBin" : "0",
+            "HTTP::Status" : "0",
             "LWP::UserAgent" : "0",
-            "Module::Runtime" : "0",
-            "Test::More" : "0"
+            "Path::Tiny" : "0",
+            "URI" : "0"
+         },
+         "requires" : {
+            "Carp" : "0",
+            "Data::Dumper" : "0",
+            "Digest::SHA" : "0",
+            "Exporter" : "0",
+            "Hash::Merge" : "0",
+            "Scalar::Util" : "0",
+            "Storable" : "0",
+            "perl" : "5.010"
+         }
+      },
+      "test" : {
+         "requires" : {
+            "DBI" : "0",
+            "HTTP::Status" : "0",
+            "LWP::UserAgent" : "0",
+            "Path::Tiny" : "0",
+            "Test::Most" : "0",
+            "URI" : "0"
          }
       }
    },
    "release_status" : "stable",
+   "resources" : {
+      "repository" : {
+         "type" : "git",
+         "url" : "https://github.com/cliveholloway/perl_simplemock.git",
+         "web" : "https://github.com/cliveholloway/perl_simplemock"
+      }
+   },
    "version" : "0.01",
    "x_serialization_backend" : "JSON::PP version 4.16"
 }

@@ -1,5 +1,7 @@
 # Tests for SimpleMock::Util
 # Covers: all_file_subs, generate_args_sha, namespace_from_file, file_from_namespace
+use FindBin;
+use lib "$FindBin::Bin/../../lib";
 use Test::Most;
 use Data::Dumper;
 use TestModule;

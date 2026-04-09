@@ -6,6 +6,7 @@ WriteMakefile(
   AUTHOR       => 'Clive Holloway <clive.holloway@gmail.com>',
   LICENSE      => 'perl',
   MIN_PERL_VERSION => '5.010',
+  test         => { TESTS => 't/*.t t/unit_tests/*.t t/unit_tests/*/*.t t/unit_tests/*/*/*.t' },
   PREREQ_PM    => {
     'Carp'             => 0,
     'Data::Dumper'     => 0,

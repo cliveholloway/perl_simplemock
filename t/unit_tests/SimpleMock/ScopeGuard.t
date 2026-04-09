@@ -2,6 +2,8 @@
 # Covers: scoped mock lifecycle, nested scopes, SUBS/DBI/LWP layer precedence
 use strict;
 use warnings;
+use FindBin;
+use lib "$FindBin::Bin/../../lib";
 use Test::Most;
 use SimpleMock qw(register_mocks register_mocks_scoped);
 use DBI;

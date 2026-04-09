@@ -1,0 +1,51 @@
+# Version control
+\bRCS\b
+\bCVS\b
+,v$
+\.svn/
+\.git/
+
+# Build artifacts
+^Makefile$
+^blib/
+^pm_to_blib$
+^blibdirs$
+^MakeMaker-\d
+^MYMETA\.
+^_build/
+^Build$
+
+# Coverage
+^cover_db/
+^nytprof
+
+# OS junk
+\.DS_Store$
+\.#
+\.rej$
+\..*\.sw.?$
+~$
+
+# CI / editor
+\.github/
+\.vscode/
+\.idea/
+\.claude/
+
+# Dotfiles
+^\.gitignore$
+^\.perlcritic$
+^\.perltidyrc$
+^\.proverc$
+
+# Project tooling
+^bin/
+^CLAUDE\.md$
+^test_app/
+
+# Dist tarballs
+\.tar\.gz$
+
+# Other
+^MANIFEST\.bak$
+^MANIFEST\.SKIP$

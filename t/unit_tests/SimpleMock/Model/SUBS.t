@@ -2,6 +2,8 @@
 # Covers: static returns, coderef returns, wantarray, default mocks, die on no match
 use strict;
 use warnings;
+use FindBin;
+use lib "$FindBin::Bin/../../../lib";
 use Test::Most;
 use SimpleMock qw(register_mocks clear_mocks);
 use TestModule;
