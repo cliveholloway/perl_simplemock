@@ -48,7 +48,7 @@ You probably won't use this module directly. Instead, you will use the `SimpleMo
 
     use SimpleMock qw(register_mocks);
 
-    register_mocks({
+    register_mocks(
         PATH_TINY => {
             '/path/to/dir/pr/file' => {
 
@@ -59,7 +59,7 @@ You probably won't use this module directly. Instead, you will use the `SimpleMo
                 # or return false as noted
                 assert => 0,              # throws
                 exists => 0,              # return 0
-                has_same_bytes => 0,      # return 0 - value is hard coded for ALL conmparisons on a mock
+                has_same_bytes => 0,      # return 0 - value is hard coded for ALL comparisons on a mock
 
                 # returns this hard coded value for the stat - set as appropriate (obviously fake below)
                 stat => [1,2,3,4],
@@ -68,19 +68,19 @@ You probably won't use this module directly. Instead, you will use the `SimpleMo
                 digest => '1a2b3c4d536f',
             },
         }
-    });
+    );
 
 For basic usage, you just need this:
 
-    register_mocks({
+    register_mocks(
         PATH_TINY => {
 
             # file MUST have a data attribute
             '/path/to/file.txt' => { data => 'file content' },
 
-            # direcory must NOT have a data attribute
+            # directory must NOT have a data attribute
             '/path/to/dir' => {},
         }
-    });
+    );
 
 =cut

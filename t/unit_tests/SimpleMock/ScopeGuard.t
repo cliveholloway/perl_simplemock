@@ -1,3 +1,5 @@
+# Tests for SimpleMock::ScopeGuard
+# Covers: scoped mock lifecycle, nested scopes, SUBS/DBI/LWP layer precedence
 use strict;
 use warnings;
 use Test::Most;

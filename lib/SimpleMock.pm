@@ -189,6 +189,8 @@ following models are supported by default:
 
 =item * LWP - for mocking LWP::UserAgent code
 
+=item * PATH_TINY - for mocking Path::Tiny code
+
 =back
 
 See documentation in each SimpleMock::Model::* namespace for details of 
@@ -307,6 +309,21 @@ scoped mocks that do not have an underlying global mock.
         # scope registered mocks are available
     }
     # scope registered mocks are no longer available 
+
+=head2 clear_mocks
+
+Clears registered mocks from the base layer. Pass one or more model names to
+clear only those models, or call with no arguments to clear everything.
+
+    use SimpleMock qw(clear_mocks);
+
+    clear_mocks('DBI');        # clear only DBI mocks
+    clear_mocks('DBI', 'LWP'); # clear DBI and LWP mocks
+    clear_mocks();             # clear all mocks
+
+Note: clearing mocks does not restore the original subroutine implementations
+for SUBS mocks. The delegation wrappers remain in place, and calling a cleared
+mock sub will die with "No mock found".
 
 =head1 BUGS AND LIMITATIONS
 

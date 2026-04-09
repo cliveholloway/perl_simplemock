@@ -187,7 +187,7 @@ for a standalone usage example.
         [ 'Diane', 'diane@testme.com' ],
     ];
 
-    register_mocks({
+    register_mocks(
         DBI => {
             # see below for global flags that can be set - by default they are all 0
             META => {
@@ -201,8 +201,8 @@ for a standalone usage example.
                     sql => 'SELECT id, name, email FROM my_table WHERE name LIKE ?',
                     # each query can have multiple results defined based on placeholder values
                     # note: the C%/D% in the args are literals on the actual args sent
-                    #       the code may be using a wild card, but the mocks are not aware of idea 
-                    results -> [
+                    #       the code may be using a wild card, but the mocks are not aware of that
+                    results => [
                         { args => [ 'C%' ], data => $d1 },
                         { args => [ 'D%' ], data => $d2 },
                     ],
@@ -211,7 +211,7 @@ for a standalone usage example.
                 },
             ],
         }
-    });
+    );
 
     # call the code that runs the query
     my $result = Module::To::Test->get_data('C%');
@@ -234,13 +234,13 @@ In your test, register your mock queries and their expected results using the `r
 
     use Test::More;
     use SimpleMock qw(register_mocks);
-    register_mocks({
+    register_mocks(
         DBI => {
             # optional meta settings
             META => {
                 ...
             },
-            # each query must have a 'query' and at least one 'results' entry
+            # each query must have an 'sql' and at least one 'results' entry
             # If you are using the `*_hashref` methods, you must also define 'cols'
             QUERIES => [
                 {

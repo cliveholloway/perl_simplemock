@@ -1,3 +1,5 @@
+# Tests for SimpleMock::Model::DBI and DBD::SimpleMock
+# Covers: query mocking, fetch methods, META flags, driver internals, scoped layers
 use strict;
 use warnings;
 use Test::Most;
@@ -7,6 +9,9 @@ use DBI;
 
 use Data::Dumper;
 
+################################################################################
+# Test data setup
+################################################################################
 my $d1 = [
     [ 'Clive', 'Clive@testme.com' ],
     [ 'Colin', 'Colin@testme.com' ],
@@ -50,6 +55,10 @@ register_mocks(
         ],
     },
 );
+
+################################################################################
+# Basic DBI operations: connect, prepare, fetch methods
+################################################################################
 
 # doesn't matter what we use here, as the mock will be used
 my $dbh = DBI->connect('dbi:SQLite:dbname=:memory:', '', '', { RaiseError => 1 });

@@ -82,9 +82,9 @@ module in your tests instead:
 
     use SimpleMock qw(register_mocks);
 
-    use My Module;
+    use My::Module;
 
-    register_mocks({
+    register_mocks(
         SUBS => {
             'My::Module' => {
                 'my_sub' => [
@@ -107,7 +107,7 @@ module in your tests instead:
                 ],
             },
         },
-    });
+    );
 
 If the catchall (returns with no args) is omitted, the sub call will die if the args
 sent do not match any of the defined mocks.

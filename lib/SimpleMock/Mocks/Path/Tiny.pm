@@ -251,7 +251,7 @@ please implement via a pull request (or just request it and I'll implement when 
 
     use SimpleMock qw(register_mocks);
 
-    register_mocks({
+    register_mocks(
         PATH_TINY => {
             '/path/to/dir/pr/file' => {
 
@@ -262,7 +262,7 @@ please implement via a pull request (or just request it and I'll implement when 
                 # or return false as noted
                 assert => 0,              # throws
                 exists => 0,              # return 0
-                has_same_bytes => 0,      # return 0 - value is hard coded for ALL conmparisons on a mock
+                has_same_bytes => 0,      # return 0 - value is hard coded for ALL comparisons on a mock
 
                 # returns this hard coded value for the stat - set as appropriate (obviously fake below)
                 stat => [1,2,3,4],
@@ -271,20 +271,20 @@ please implement via a pull request (or just request it and I'll implement when 
                 digest => '1a2b3c4d536f',
             },
         }
-    });
+    );
 
 For basic usage, you just need this:
 
-    register_mocks({
+    register_mocks(
         PATH_TINY => {
 
             # file MUST have a data attribute
             '/path/to/file.txt' => { data => 'file content' },
 
-            # direcory must NOT have a data attribute
+            # directory must NOT have a data attribute
             '/path/to/dir' => {},
         }
-    });
+    );
 
 
 =head1 MOCK ATTRIBUTES
@@ -293,7 +293,7 @@ These are all valid keys for mock attributes:
 
 =head2 data
 
-The data to return if the file was read via slurp or lines (and their raw and utf8 varients).
+The data to return if the file was read via slurp or lines (and their raw and utf8 variants).
 Setting this attribute implicitly defines the mock as a file, omitting it implies a directory.
 
 It is up to you to ensure utf8/raw values are set as expected.
@@ -337,7 +337,7 @@ If you are using copy, there's small differences in behavior between copy to fil
     $p->copy('/path/to/file.txt')
 
     # copy to a directory you must set the target dir as a mock
-    $p->copy->('/path/to/dir');
+    $p->copy('/path/to/dir');
 
 ie, in your `register` mocks call, you must have:
 
@@ -362,6 +362,6 @@ If someone wants to add in functionality for it to work in Windows, please do.
 
 `visit` uses `iterator`, so an exception is thrown if you set the `recurse` argument.
 
-If recursion is relly needed, it can be added, but so far it's not implemented.
+If recursion is really needed, it can be added, but so far it's not implemented.
 
 =cut

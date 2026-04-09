@@ -2,7 +2,6 @@ package SimpleMock::Model::DBI;
 use strict;
 use warnings;
 use DBI;
-use DBD::Mock;
 use Storable qw(dclone);
 use Data::Dumper;
 
@@ -120,7 +119,7 @@ module in your tests instead:
 
     use SimpleMock qw(register_mocks);
 
-    register_mocks({
+    register_mocks(
         DBI => {
             QUERIES => [
                 {
@@ -129,22 +128,22 @@ module in your tests instead:
 
                         # specific result data for arg sent
                         { args => [1],
-                          data => [ [arrayref, of], [array, refs] ] },
+                          data => [ ['Alice', 'alice@example.com'] ] },
 
                         # specific result data for arg sent
                         { args => [2],
-                          data => [ [another, arrayref], [of, arrayrefs] ] },
+                          data => [ ['Bob', 'bob@example.com'] ] },
 
                         # result data for all other args
-                        { data => [ [default, arrayref], [of, arrayrefs] ] },
+                        { data => [ ['Default', 'default@example.com'] ] },
 
                     ],
                 },
             ],
         },
-    });
+    );
 
-For each query, specify the SQL statement. Then, in the reults array, provide the 
+For each query, specify the SQL statement. Then, in the results array, provide the 
 placeholder args and data to return for each, and an optional default result that only
 has a data element to use as a default for query executions where there is no args match
 

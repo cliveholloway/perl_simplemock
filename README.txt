@@ -86,16 +86,16 @@ Now, we can mock the `_get_user_data` sub in our tests:
     use TestModule;
     use SimpleMock qw(register_mocks);
 
-    register_mocks({
+    register_mocks(
         SUBS => {
             MyModule => {
                 _get_user_data => [
-                    { args => [1] , return => 'mocked data for user 1' },
-                    { return => 'default mocked data for all other user IDs' },
+                    { args => [1] , returns => 'mocked data for user 1' },
+                    { returns => 'default mocked data for all other user IDs' },
                 ],
             },
         },
-    });
+    );
 
 If you are being systematic, you can set default mocks in SimpleMocks::Mocks::MyModule
 for _get_user_data, reducing the number of times you need to specify the mock in

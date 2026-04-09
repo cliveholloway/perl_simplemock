@@ -1,3 +1,5 @@
+# Tests for SimpleMock::Model::LWP
+# Covers: GET/POST/PUT mocking, arg matching, bespoke responses, layer traversal
 use strict;
 use warnings;
 use Test::Most;

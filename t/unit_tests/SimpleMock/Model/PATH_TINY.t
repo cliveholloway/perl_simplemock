@@ -1,3 +1,5 @@
+# Tests for SimpleMock::Model::PATH_TINY and SimpleMock::Mocks::Path::Tiny
+# Covers: file/dir mocking, slurp, spew, copy, children, assert, stat, size, iterators
 use strict;
 use warnings;
 use Test::Most;

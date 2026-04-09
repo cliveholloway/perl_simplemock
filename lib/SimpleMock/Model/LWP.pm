@@ -96,7 +96,7 @@ This module allows you to register HTTP mocks for LWP requests, enabling you to 
 You probably won't use this module directly. Instead, you will use the `SimpleMock` module to register your mocks. Here's an example of how to do that:
 
     use SimpleMock qw(register_mocks);
-    register_mocks({
+    register_mocks(
         LWP => {
             # URL
             'http://example.com/api' => {
@@ -125,7 +125,7 @@ You probably won't use this module directly. Instead, you will use the `SimpleMo
                 ],
             },
         },
-    });
+    );
 
 If args are not specified, the mock will be registered as a default mock for that URL and method.
 If args are specified, they will be used to differentiate between different mocks for the same

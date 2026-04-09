@@ -4,10 +4,14 @@ use Test::More;
 my @modules = qw(
     SimpleMock
     SimpleMock::Util
+    SimpleMock::ScopeGuard
     SimpleMock::Model::DBI
     SimpleMock::Model::LWP
+    SimpleMock::Model::SUBS
+    SimpleMock::Model::PATH_TINY
     SimpleMock::Mocks::DBI
-    SimpleMock::Mocks::LWP
+    SimpleMock::Mocks::LWP::UserAgent
+    SimpleMock::Mocks::Path::Tiny
     DBD::SimpleMock
 );
 

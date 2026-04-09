@@ -1,3 +1,5 @@
+# Tests for SimpleMock::Model::SUBS
+# Covers: static returns, coderef returns, wantarray, default mocks, die on no match
 use strict;
 use warnings;
 use Test::Most;
