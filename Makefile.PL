@@ -1,4 +1,20 @@
 use ExtUtils::MakeMaker;
+
+my %test_requires = (
+    'Test::Most'       => 0,
+    'DBI'              => 0,
+    'LWP::UserAgent'   => 0,
+    'HTTP::Status'     => 0,
+    'Path::Tiny'       => 0,
+    'URI'              => 0,
+);
+
+# TEST_REQUIRES was added in EUMM 6.64; fall back to PREREQ_PM on older versions
+my $eumm_version = eval $ExtUtils::MakeMaker::VERSION;
+my %test_key = $eumm_version >= 6.64
+    ? ( TEST_REQUIRES => \%test_requires )
+    : ( PREREQ_PM     => \%test_requires );   # merged below
+
 WriteMakefile(
   NAME         => 'SimpleMock',
   VERSION_FROM => 'lib/SimpleMock.pm',
@@ -15,15 +31,9 @@ WriteMakefile(
     'Hash::Merge'      => 0,
     'Scalar::Util'     => 0,
     'Storable'         => 0,
+    %{ $test_key{PREREQ_PM} || {} },
   },
-  TEST_REQUIRES => {
-    'Test::Most'       => 0,
-    'DBI'              => 0,
-    'LWP::UserAgent'   => 0,
-    'HTTP::Status'     => 0,
-    'Path::Tiny'       => 0,
-    'URI'              => 0,
-  },
+  %test_key,
   META_MERGE => {
     'meta-spec' => { version => 2 },
     resources   => {
