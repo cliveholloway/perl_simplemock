@@ -47,8 +47,8 @@
             "Exporter" : "0",
             "Hash::Merge" : "0",
             "Scalar::Util" : "0",
-            "Storable" : "0",
-            "perl" : "5.010"
+            "Storable" : "2.34",
+            "perl" : "5.012"
          }
       },
       "test" : {

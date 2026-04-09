@@ -7,7 +7,7 @@ requires 'Digest::SHA';
 requires 'Exporter';
 requires 'Hash::Merge';
 requires 'Scalar::Util';
-requires 'Storable';
+requires 'Storable', '2.34';
 
 # Optional: only needed if using the corresponding mock model
 recommends 'DBI';

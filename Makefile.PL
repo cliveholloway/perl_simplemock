@@ -21,7 +21,7 @@ WriteMakefile(
   ABSTRACT     => 'Generic mocking framework for Perl modules',
   AUTHOR       => 'Clive Holloway <clive.holloway@gmail.com>',
   LICENSE      => 'perl',
-  MIN_PERL_VERSION => '5.010',
+  MIN_PERL_VERSION => '5.012',
   test         => { TESTS => 't/*.t t/unit_tests/*.t t/unit_tests/*/*.t t/unit_tests/*/*/*.t' },
   PREREQ_PM    => {
     'Carp'             => 0,
@@ -30,7 +30,7 @@ WriteMakefile(
     'Exporter'         => 0,
     'Hash::Merge'      => 0,
     'Scalar::Util'     => 0,
-    'Storable'         => 0,
+    'Storable'         => '2.34',
     %{ $test_key{PREREQ_PM} || {} },
   },
   %test_key,
