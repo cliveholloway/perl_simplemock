@@ -35,20 +35,20 @@ sub register_mocks {
     _register_into_layer($MOCK_STACK[0], \%mocks_data);
 }
 
-# pushes a new layer, registers into it, returns a guard                                                                                                                 
+# pushes a new layer, registers into it, returns a guard
 sub register_mocks_scoped {
-    my %mocks_data = @_;                                                                                                                                                 
+    my %mocks_data = @_;
     my $layer = {};
-    push @MOCK_STACK, $layer;                                                                                                                                            
+    push @MOCK_STACK, $layer;
     _register_into_layer($layer, \%mocks_data);
     return SimpleMock::ScopeGuard->new($layer);
 }
 
-sub _register_into_layer {                                                                                                                                               
+sub _register_into_layer {
     my ($layer, $mocks_data) = @_;
     foreach my $model (keys %$mocks_data) {
         $model =~ /^[A-Z_]+$/ or die "Mock model class must be ALL_CAPS and underscores only! ($model)";
-        my $model_ns = "SimpleMock::Model::$model";                                                                                                                      
+        my $model_ns = "SimpleMock::Model::$model";
 
         # load model NS if needed — convert Foo::Bar to Foo/Bar.pm for block eval
         (my $model_file = $model_ns) =~ s{::}{/}g;
@@ -58,13 +58,13 @@ sub _register_into_layer {
         my $processed = "${model_ns}::validate_mocks"->($mocks_data->{$model});
 
         # merge INTO the layer reference in-place
-        %$layer = %{ Hash::Merge::merge($processed, $layer) };                                                                                                           
-    }                                                                                                                                                                    
+        %$layer = %{ Hash::Merge::merge($processed, $layer) };
+    }
 }
 
-sub _register_into_current_scope {                                                                                                                                       
+sub _register_into_current_scope {
     my %mocks_data = @_;
-    _register_into_layer($MOCK_STACK[-1], \%mocks_data);                                                                                                                 
+    _register_into_layer($MOCK_STACK[-1], \%mocks_data);
 }
 
 sub _load_mocks_for {
@@ -193,12 +193,12 @@ following models are supported by default:
 
 =back
 
-See documentation in each SimpleMock::Model::* namespace for details of 
+See documentation in each SimpleMock::Model::* namespace for details of
 the mock data formats.
 
 Other models can easily be added via the SimpleMock::Model namespace. If
 you add mocks that are for a commonly used module, please consider submitting
-a pull request so that others can use them. 
+a pull request so that others can use them.
 
 Currently, there is no versioning of the mocks, so you should
 ensure that the mocks you use are compatible with the version of the
@@ -242,6 +242,62 @@ is a hash where the keys are the model we are mocking, ie:
         LWP_UA    => { ... },
         PATH_TINY => { ... },
     );
+
+=head1 ARCHITECTURE
+
+  +------------------+
+  |    Test Code     |
+  +------------------+
+           |
+           | register_mocks( MODEL => { ... } )
+           | register_mocks_scoped( MODEL => { ... } )
+           | clear_mocks()
+           v
+  +------------------+     +-------------------------------------------+
+  |   SimpleMock.pm  |---->|            @MOCK_STACK                    |
+  |                  |     | +---------------------------------------+ |
+  |  require override|     | | Layer 2 (inner scope)  <- searched 1st| |
+  |  _load_mocks_for |     | +---------------------------------------+ |
+  |                  |     | | Layer 1 (outer scope)  <- searched 2nd| |
+  +------------------+     | +---------------------------------------+ |
+                           | | Layer 0 (global base)  <- searched 3rd| |
+                           | +---------------------------------------+ |
+                           +-------------------------------------------+
+                                            |
+              +-----------------------------+--------------------+
+              |              |              |                    |
+              v              v              v                    v
+     +-----------+   +-----------+   +-------------+   +-------------+
+     |Model::SUBS|   |Model::DBI |   |Model::LWP_UA|   |Model::PATH_ |
+     |           |   |           |   |             |   |  TINY       |
+     |validate_  |   |validate_  |   |validate_    |   |validate_    |
+     |  mocks()  |   |  mocks()  |   |  mocks()    |   |  mocks()    |
+     +-----------+   +-----------+   +-------------+   +-------------+
+          |               |               |                  |
+          v               v               v                  v
+     +-----------+   +-----------+   +------------+   +-------------+
+     |Mocks::*   |   |Mocks::DBI |   |Mocks::LWP::|   |Mocks::Path::|
+     |(auto-load)|   |           |   | UserAgent  |   |  Tiny       |
+     |           |   |overrides  |   |overrides   |   |overrides    |
+     |delegation |   |DBI::      |   |LWP::User   |   |Path::Tiny   |
+     |wrappers   |   | connect   |   | Agent::new |   | methods     |
+     +-----------+   +-----------+   +------------+   +-------------+
+                          |
+                          v
+                     +-----------+
+                     |DBD::      |
+                     |SimpleMock |
+                     | (driver)  |
+                     +-----------+
+
+Flow:
+  use SimpleMock  ->  installs CORE::GLOBAL::require override
+  use MyModule    ->  override loads SimpleMock::Mocks::MyModule
+                      (if it exists), auto-registers matching subs
+  register_mocks  ->  Model::*::validate_mocks() normalises data,
+                      merges into Layer 0
+  scoped mocks    ->  push new layer, ScopeGuard::DESTROY pops it
+  mock lookup     ->  traverse stack top-to-bottom, first match wins
 
 =head1 METHODS
 
@@ -302,13 +358,13 @@ scoped mocks that do not have an underlying global mock.
 
     # set global mocks
     register_mocks(...);
-    
+
     {
         # set scoped mocks
         my $scope_guard = register_mocks_scoped(...);
         # scope registered mocks are available
     }
-    # scope registered mocks are no longer available 
+    # scope registered mocks are no longer available
 
 =head2 clear_mocks
 
