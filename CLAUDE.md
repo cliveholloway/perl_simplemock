@@ -5,18 +5,27 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-# Run all unit tests
-prove -Ilib -It/lib -r t/unit_tests/
+# Run all tests (same as CPAN install would run)
+make test
+
+# Run all unit tests directly via prove
+prove -Ilib -It/lib -r t/
 
 # Run a single test file
 perl -Ilib -It/lib t/unit_tests/SimpleMock.t
 perl -Ilib -It/lib t/unit_tests/SimpleMock/Model/DBI.t
 
-# Run top-level load/pod tests (make test only covers these, not unit_tests/)
-make test
-
 # Install dependencies
 cpanm --installdeps .
+
+# Build distribution
+perl Makefile.PL && make dist
+
+# Verify MANIFEST completeness
+make distcheck
+
+# Test across Perl versions
+perlbrew exec --with perl-5.14.0 bash -c 'cd ~/repos/perl_simplemock && prove -Ilib -It/lib -r t/'
 ```
 
 ## Architecture
@@ -53,6 +62,8 @@ To add a new model, create `lib/SimpleMock/Model/MYMODEL.pm` with a `validate_mo
 
 `SimpleMock.pm` installs a `CORE::GLOBAL::require` override in a `BEGIN` block. Every module load is intercepted: after the real `require` completes, `_load_mocks_for` checks whether `SimpleMock/Mocks/$original_file.pm` exists and loads it if so. Any sub in the `SimpleMock::Mocks::*` namespace that matches a sub in the original namespace is automatically registered as a default SUBS mock. `_load_mocks_for` skips files whose path starts with `SimpleMock` to avoid recursion.
 
+**Important:** `use SimpleMock` must come before `use YourModule` for auto-loading to work — the require override must be in place before the module is loaded.
+
 The override does **not** return a value, so callers must not rely on its return. Use `eval { require $file }; die $@ if $@` rather than `eval { require $file } or die`.
 
 When `require` receives a variable containing `::` (not a bareword), Perl does not auto-convert `::` to `/`. Always convert explicitly: `(my $file = $ns) =~ s{::}{/}g; $file .= '.pm'`.
@@ -70,3 +81,10 @@ Mock return values are keyed by SHA-256 of `Data::Dumper`-serialised args. An en
 ### PATH_TINY mocking
 
 `SimpleMock::Mocks::Path::Tiny` patches Path::Tiny methods via glob assignment. All lookups go through `_get_path_mock($path)`, which traverses `@MOCK_STACK`. `_get_path_mock` accepts both plain strings and Path::Tiny objects — the latter stringify correctly due to Path::Tiny's `""` overload. A path with a `data` attribute is treated as a file; without `data` it is a directory.
+
+## CPAN Distribution
+
+- `MIN_PERL_VERSION` is 5.012 (required by Test::Deep, a dependency of Test::Most)
+- `Storable >= 2.34` is required (older versions shipped with Perl 5.14 have a known bug)
+- DBI, LWP::UserAgent, Path::Tiny are `recommends` (optional) — only needed if using those mock models
+- Test files under `t/unit_tests/` use `FindBin`+`use lib` to locate `t/lib/` helpers

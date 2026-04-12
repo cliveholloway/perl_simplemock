@@ -6,7 +6,7 @@ my @modules = qw(
     SimpleMock::Util
     SimpleMock::ScopeGuard
     SimpleMock::Model::DBI
-    SimpleMock::Model::LWP
+    SimpleMock::Model::LWP_UA
     SimpleMock::Model::SUBS
     SimpleMock::Model::PATH_TINY
     SimpleMock::Mocks::DBI

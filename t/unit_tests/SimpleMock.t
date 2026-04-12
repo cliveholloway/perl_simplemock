@@ -78,11 +78,11 @@ my $data2 = TestModule::run_db_query('J%');
 is_deeply $data2, $d2, 'DBI mock query with no args';
 
 ################################################################################
-# LWP - see test for SimpleMock::Model::LWP for more examples
+# LWP::UserAgent - see test for SimpleMock::Model::LWP_UA for more examples
 ################################################################################
 
 register_mocks(
-    LWP => {
+    LWP_UA => {
         'http://example.com' => {
             GET => [
                 { response => 'Example Content' },
@@ -158,7 +158,7 @@ lives_ok { require 'TestModule' } 'require string without .pm extension lives';
 # ALWAYS LEAVE THESE TESTS AT THE END
 # can clear one or all set mocks
 is scalar(keys %{$SimpleMock::MOCK_STACK[0]}), 3, "mock type count";
-clear_mocks('LWP');
+clear_mocks('LWP_UA');
 is scalar(keys %{$SimpleMock::MOCK_STACK[0]}), 2, "clear a class of mocks";
 clear_mocks();
 is_deeply $SimpleMock::MOCK_STACK[0], {}, "clear all mocks";

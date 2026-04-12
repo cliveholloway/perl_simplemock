@@ -16,8 +16,8 @@ my $orig = \&LWP::UserAgent::new;
     my $ua = $orig->($class, @args);
 
     # This remains in the model to avoid circular deps
-    require SimpleMock::Model::LWP;
-    $ua->add_handler(request_send => \&SimpleMock::Model::LWP::mock_send_request);
+    require SimpleMock::Model::LWP_UA;
+    $ua->add_handler(request_send => \&SimpleMock::Model::LWP_UA::mock_send_request);
 
     return $ua;
 };

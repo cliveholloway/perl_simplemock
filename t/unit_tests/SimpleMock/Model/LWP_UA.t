@@ -1,4 +1,4 @@
-# Tests for SimpleMock::Model::LWP
+# Tests for SimpleMock::Model::LWP_UA
 # Covers: GET/POST/PUT mocking, arg matching, bespoke responses, layer traversal
 use strict;
 use warnings;
@@ -10,7 +10,7 @@ my $ua = LWP::UserAgent->new;
 
 register_mocks(
 
-    LWP => {
+    LWP_UA => {
 
         'http://example.com' => {
 
@@ -84,7 +84,7 @@ throws_ok { $ua->post('http://example.com', { foo => 'bar' }) }
 
 # PUT request - falls through POST/GET branches, args treated as empty (_default sha)
 register_mocks(
-    LWP => {
+    LWP_UA => {
         'http://example.com/put-test' => {
             'PUT' => [
                 { response => 'PUT response' },
@@ -95,12 +95,12 @@ register_mocks(
 my $r_put = $ua->put('http://example.com/put-test');
 is $r_put->content, 'PUT response', 'PUT request returns mocked response';
 
-# scoped layer with no LWP key - _get_mock_for must traverse past it
+# scoped layer with no LWP_UA key - _get_mock_for must traverse past it
 {
-    my $guard = SimpleMock::register_mocks_scoped();  # empty layer, no LWP key
+    my $guard = SimpleMock::register_mocks_scoped();  # empty layer, no LWP_UA key
     my $r = $ua->get('http://example.com');
     is $r->content, 'Response for GET request with no args',
-        '_get_mock_for traverses past scoped layer without LWP key';
+        '_get_mock_for traverses past scoped layer without LWP_UA key';
 }
 
 done_testing();

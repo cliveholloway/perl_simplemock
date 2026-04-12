@@ -41,7 +41,6 @@
 # Project tooling
 ^bin/
 ^CLAUDE\.md$
-^test_app/
 
 # Dist tarballs
 \.tar\.gz$

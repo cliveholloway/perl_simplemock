@@ -165,7 +165,7 @@ SimpleMock - A simple mocking framework for Perl
                 ...
             ],
         },
-        LWP => {
+        LWP_UA => {
             ...
         },
     );
@@ -181,13 +181,13 @@ SimpleMock - A simple mocking framework for Perl
 SimpleMock is a simple, extendable mocking framework for Perl. The
 following models are supported by default:
 
-=over
+=over 4
 
 =item * SUBS - for mocking subroutine calls
 
 =item * DBI - for mocking DBI code
 
-=item * LWP - for mocking LWP::UserAgent code
+=item * LWP_UA - for mocking LWP::UserAgent code
 
 =item * PATH_TINY - for mocking Path::Tiny code
 
@@ -208,40 +208,40 @@ have yet to hit a use case in production code to justify it.
 
 =head2 DEFINING MOCKS
 
-Mocks can be defined in several ways:
+Mocks can be defined via:
 
-=head3 In a default mock module
+=over 4
 
-For SUBs, any method in SimpleMock::Mocks::Namespace that matches a method in the original
-Namespace module will be used as a default mock. This distribution comes with
-a mock for TestModule.pm that overrides a couple of methods as an example.
+=item * defined sub in SimpleMock::Mocks modules
 
-Please consider contributing common SimpleMock::Mocks::* mocks for cpan
-modules to add to the distribution via a pull request on GitHub.
+=item * calls to register_mocks in SimpleMock::Mocks modules
 
-=head3 Via calls to register_mocks in the mocks modules
+=item * calls to register_mocks in your test code
 
-Calls to register_mocks in individual SimpleMock::Mocks modules allow you to
-set mocks that are available to all tests. This is useful for setting up
-default mocks for a module that are used in many tests.
+=item * calls to register_mocks_scoped in blocks in your tests
 
-=head3 Via calls to register_mocks in your test code
+=back
 
-You can extend the existing mocks (and override default mocks) by calling
-register_mocks in your test code. This allows you to create mocks that are
-fine tuned to your test cases.
+=head1 GETTING STARTED
 
-    use SimpleMock qw(register_mocks);
-    register_mocks(...);
+Look at each of the model modules to see how to define each mock type:
 
-=head3 As scoped mocks in the current block
+    perldoc SimpleMock::Model::SUBS
+    perldoc SimpleMock::Model::DBI
+    perldoc SimpleMock::Model::LWP_UA
+    perldoc SimpleMock::Model::PATH_TINY
 
+The SUBS model also goes over the various ways you can define mocks.
 
-    {
-        my $scope_guard = register_mocks_scoped(...);
-        # scope registered mocks are available
-    }
-    # scope registered mocks are no longer available 
+In calls to C<register_mocks> and C<register_mocks_scoped> the arg sent
+is a hash where the keys are the model we are mocking, ie:
+
+    register_mocks(
+        SUBS      => { ... },
+        DBI       => { ... },
+        LWP_UA    => { ... },
+        PATH_TINY => { ... },
+    );
 
 =head1 METHODS
 
@@ -318,7 +318,7 @@ clear only those models, or call with no arguments to clear everything.
     use SimpleMock qw(clear_mocks);
 
     clear_mocks('DBI');        # clear only DBI mocks
-    clear_mocks('DBI', 'LWP'); # clear DBI and LWP mocks
+    clear_mocks('DBI', 'LWP_UA'); # clear DBI and LWP_UA mocks
     clear_mocks();             # clear all mocks
 
 Note: clearing mocks does not restore the original subroutine implementations

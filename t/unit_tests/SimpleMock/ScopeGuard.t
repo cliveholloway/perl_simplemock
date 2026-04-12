@@ -1,5 +1,5 @@
 # Tests for SimpleMock::ScopeGuard
-# Covers: scoped mock lifecycle, nested scopes, SUBS/DBI/LWP layer precedence
+# Covers: scoped mock lifecycle, nested scopes, and model layer precedence
 use strict;
 use warnings;
 use FindBin;
@@ -93,10 +93,10 @@ is_deeply TestModule::run_db_query('x'), $base_rows, 'base DBI mock returns base
 is_deeply TestModule::run_db_query('x'), $base_rows, 'base DBI mock restored after scope exits';
 
 ################################################################################
-# Scoped LWP mocks
+# Scoped LWP_UA mocks
 ################################################################################
 register_mocks(
-    LWP => {
+    LWP_UA => {
         'http://example.com' => {
             GET => [{ response => 'base lwp response' }],
         },
@@ -105,11 +105,11 @@ register_mocks(
 
 is TestModule::fetch_url('http://example.com')->content,
     'base lwp response',
-    'base LWP mock returns base response';
+    'base LWP_UA mock returns base response';
 
 {
     my $guard = register_mocks_scoped(
-        LWP => {
+        LWP_UA => {
             'http://example.com' => {
                 GET => [{ response => 'scoped lwp response' }],
             },
@@ -117,11 +117,11 @@ is TestModule::fetch_url('http://example.com')->content,
     );
     is TestModule::fetch_url('http://example.com')->content,
         'scoped lwp response',
-        'scoped LWP mock overrides base';
+        'scoped LWP_UA mock overrides base';
 }
 
 is TestModule::fetch_url('http://example.com')->content,
     'base lwp response',
-    'base LWP mock restored after scope exits';
+    'base LWP_UA mock restored after scope exits';
 
 done_testing();

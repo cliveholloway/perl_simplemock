@@ -77,33 +77,57 @@ in a very simple way.
 
 =head1 USAGE
 
-You probably won't want to use this module directly, but rather use the SimpleMock
-module in your tests instead:
+=head2 via SimpleMock::Mocks::* modules
 
-    use SimpleMock qw(register_mocks);
+Use this approach to set global mocks for subs in your own code. If you have (say)
+a module called MyModule.pm with a sub called 'load_conf_file' that loads data and
+returns the content, to mock it, you would just add the sub to the relevant Mocks file, eg:
 
+    package SimpleMock::Mocks::MyModule;
+    use strict;
+    use warnings;
+
+    sub load_conf_file {
+        return 'a static conf file';
+    }
+
+    1;
+
+And that's it. In every test where you load SimpleMock, that mock will automatically
+load when your test code uses the MyMock module.
+
+=head2 via calls to C<register_mocks()> and C<register_mocks_scoped()>
+
+    # load this before any of the code that will need mocking
+    use SimpleMock qw(register_mocks register_mocks_scoped);
+
+    # this loads My::Module and, if they exist, the mocks in SimpleMock::Mocks::My::Module
     use My::Module;
 
+    # manually register overrides
     register_mocks(
+        # the model namespace
         SUBS => {
+            # the namespace we are mocking in
             'My::Module' => {
+                # the sub we are mocking
                 'my_sub' => [
+                    # mocks are hashrefs with keys 'args' and 'returns'
+                    # if 'args' is omitted, the 'returns' value is used as a default
 
                     # return a specific value for these args
                     { args => [1, 2],
                       returns => 'return value for args 1,2' },
 
                     # run the code reference for these args
-                    # (in this example I'm not using the args, but am showing how
-                    # you would access them in the sub if needed)
                     { args => [3, 4],
                       # just return a random number from 1 to 10
-                      returns => sub { my ($arg1, $arg2) = @_; return int(rand(10))+1; } },
+                      returns => sub { return int(rand(10))+1; } },
 
                     # return value for any other args
                     # you can use a subref here (as above) for a more powerful default,
                     # or just return a static value
-                    { returns => sub {my ($arg1, $arg2) = @_; return $arg1+$arg2 } },
+                    { returns => sub { my ($arg1, $arg2) = @_; return $arg1+$arg2 } },
                 ],
             },
         },
@@ -114,12 +138,34 @@ sent do not match any of the defined mocks.
 
 The return value can be a literal value, or a code reference. If it is a code
 reference, it will be called with the args passed to the subroutine. This is
-useful for generating dynamic return values based on the input arguments. The subref
-should generally be used as a catchall, but there are cases where you might want to
-use it for specific args (eg for a random response).
+useful for generating dynamic return values based on the input arguments. You'll probably
+want static return values, but the sub ref option is there in case it's needed
+(eg for a random response).
 
 Use the coderef approach too if you need to return a hash or array, or if
 you need to support wantarray calls. I originally considered doing this via another
 key in the mock definition, but it seemed simpler to just use a coderef for these.
 
+eg:
+
+    { returns => sub { wantarray ? ('one', 'two', 'three') : 3; } }
+
+If you want to override these default mocks temporarily in sub tests, you can use C<register_mocks_scoped>
+
+    # global test mocks are set at the beginning of the test, but we want to override
+    # them for the next block only
+    {
+        # assign to a scope guard, same arg syntax as for C<register_mocks>
+        my $scope_guard = register_mocks_scoped(...);
+
+        # any tests you run here will use the mocks you have created above
+    }
+    # after the block ends, the scoped mocks are destroyed and the original mocks
+    # are used again
+
+There is a dummy app in the ./t directory of this distribution. Please examine to see examples
+of the different mocking options.
+
 =cut
+
+

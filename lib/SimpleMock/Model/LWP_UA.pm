@@ -1,4 +1,4 @@
-package SimpleMock::Model::LWP;
+package SimpleMock::Model::LWP_UA;
 use strict;
 use warnings;
 use HTTP::Status qw(status_message);
@@ -39,7 +39,7 @@ sub mock_send_request {
     $url =~ s/\?.*//;
 
     for my $layer (reverse @SimpleMock::MOCK_STACK) {
-        my $lwp = $layer->{LWP} or next;
+        my $lwp = $layer->{LWP_UA} or next;
         my $response = $lwp->{$url}->{$method}->{$args_sha}
                     || $lwp->{$url}->{$method}->{_default};
         return $response if $response;
@@ -74,7 +74,7 @@ sub validate_mocks {
                                );
 
                 my $sha = generate_args_sha($mock->{args});   
-                $new_mocks->{LWP}->{$url}->{$method}->{$sha} = $response;
+                $new_mocks->{LWP_UA}->{$url}->{$method}->{$sha} = $response;
             }
         }
     }
@@ -85,7 +85,7 @@ sub validate_mocks {
 
 =head1 NAME
 
-SimpleMock::Model::LWP
+SimpleMock::Model::LWP_UA
 
 =head1 DESCRIPTION
 
@@ -97,7 +97,7 @@ You probably won't use this module directly. Instead, you will use the `SimpleMo
 
     use SimpleMock qw(register_mocks);
     register_mocks(
-        LWP => {
+        LWP_UA => {
             # URL
             'http://example.com/api' => {
                 # HTTP method

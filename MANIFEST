@@ -6,7 +6,7 @@ lib/SimpleMock/Mocks/DBI.pm
 lib/SimpleMock/Mocks/LWP/UserAgent.pm
 lib/SimpleMock/Mocks/Path/Tiny.pm
 lib/SimpleMock/Model/DBI.pm
-lib/SimpleMock/Model/LWP.pm
+lib/SimpleMock/Model/LWP_UA.pm
 lib/SimpleMock/Model/PATH_TINY.pm
 lib/SimpleMock/Model/SUBS.pm
 lib/SimpleMock/ScopeGuard.pm
@@ -22,7 +22,7 @@ t/lib/TestModule2.pm
 t/pod.t
 t/unit_tests/SimpleMock.t
 t/unit_tests/SimpleMock/Model/DBI.t
-t/unit_tests/SimpleMock/Model/LWP.t
+t/unit_tests/SimpleMock/Model/LWP_UA.t
 t/unit_tests/SimpleMock/Model/PATH_TINY.t
 t/unit_tests/SimpleMock/Model/SUBS.t
 t/unit_tests/SimpleMock/ScopeGuard.t

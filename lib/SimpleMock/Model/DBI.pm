@@ -121,6 +121,22 @@ module in your tests instead:
 
     register_mocks(
         DBI => {
+            # all meta values default to false if not explicitly set
+            META => {
+                # 0|1 allow queries that are not mocked to run with a default empty result set
+                'allow_unmocked_queries' => 1,
+
+                # 0|1 if true, then $dbh->connect returns undef (use for error checking tests)
+                'connect_fail' => 0,
+
+                # 0|1 if true, then $dbh->prepare fails with invalid SQL error
+                'prepare_fail' => 0,
+            
+                # 0|1 if true, then $sth->execute returns undef (use for error checking tests)
+                'execute_fail' => 0,
+            },
+            # QUERIES is an array of individual sql statements and what to return when executed
+            # with specific args
             QUERIES => [
                 {
                     sql => 'SELECT name, email FROM users WHERE id = ?',
