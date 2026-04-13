@@ -5,7 +5,7 @@ use Path::Tiny;
 
 use Data::Dumper;
 
-our $VERSION = '0.01';
+our $VERSION = '0.03';
 
 
 # list attributes that can be 0 (false) or 1 (true)
@@ -36,7 +36,7 @@ sub validate_mocks {
 
 =head1 NAME
 
-SimpleMock::Model::PATH_TINY
+SimpleMock::Model::PATH_TINY - Mock model for Path::Tiny operations
 
 =head1 DESCRIPTION
 

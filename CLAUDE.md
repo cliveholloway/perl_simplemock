@@ -2,6 +2,16 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Releasing
+
+When building a release tarball (`make dist`), ensure all `our $VERSION` declarations across `lib/` are in sync. CPAN tooling requires literal version strings in each file (no aliases). Bump them all at once with:
+
+```bash
+grep -rl 'our $VERSION' lib/ | xargs sed -i "s/\$VERSION = '[0-9.]*'/\$VERSION = '0.XX'/g"
+```
+
+Also update the `provides` version entries in `Makefile.PL` and add a Changes entry.
+
 ## Commands
 
 ```bash

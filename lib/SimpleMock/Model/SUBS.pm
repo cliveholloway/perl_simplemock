@@ -7,7 +7,7 @@ use SimpleMock::Util qw(
 );
 use Data::Dumper;
 
-our $VERSION = '0.01';
+our $VERSION = '0.03';
 
 our %DELEGATED;
 
@@ -67,7 +67,7 @@ sub _get_return_value_for_args {
 
 =head1 NAME
 
-SimpleMock::Model::SUBS
+SimpleMock::Model::SUBS - Mock model for subroutine calls
 
 =head1 DESCRIPTION
 
