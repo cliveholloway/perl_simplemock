@@ -71,7 +71,7 @@ sub _load_mocks_for {
     my $original_filename = shift;
      _debug("_load_mocks_for($original_filename)");
     # Skip if the file is a SimpleMock file
-    return if $original_filename =~ /^SimpleMock/;
+    return if $original_filename =~ /^SimpleMock\b/;
 
     my $mock_filename = "SimpleMock/Mocks/$original_filename";
     eval {
