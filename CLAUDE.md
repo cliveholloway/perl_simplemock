@@ -78,6 +78,8 @@ The override does **not** return a value, so callers must not rely on its return
 
 When `require` receives a variable containing `::` (not a bareword), Perl does not auto-convert `::` to `/`. Always convert explicitly: `(my $file = $ns) =~ s{::}{/}g; $file .= '.pm'`.
 
+The "mock file not found" detection in `_load_mocks_for` must anchor the regex (`/\ACan't locate \S+ in \@INC/`). A loose `/Can't locate/` also matches "Can't locate object method" dies from `validate_mocks`, which would silently swallow real errors raised while a Mocks file is being auto-loaded.
+
 ### SUBS delegation
 
 The first time a sub is registered, `validate_mocks` installs a delegation wrapper: `*Foo::bar = sub { _get_return_value_for_args('Foo', 'bar', \@_) }`. This is tracked in `%SimpleMock::Model::SUBS::DELEGATED` and only installed once per sub. The original implementation is permanently replaced for the lifetime of the test process — calling a mocked sub after `clear_mocks` without re-registering will die.
