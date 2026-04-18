@@ -18,16 +18,17 @@ sub validate_mocks {
     my $new_mocks = {};
 
     PATH: foreach my $path (keys %$mocks_data) {
+        my $normalized_path = SimpleMock::Mocks::Path::Tiny::_normalize_path($path);
         # implicit directory if has children
         $mocks_data->{$path}->{is_dir} =1 if $mocks_data->{$path}->{children};
 
         T_F_KEY: foreach my $key (@t_f_keys) {
             my $val = $mocks_data->{$path}->{$key};
             next T_F_KEY unless defined $val;
-            $t_f{$val} or die "Invalid value for key '$key' in Path::Tiny mock for path '$path' - must be 0|1"; 
+            $t_f{$val} or die "Invalid value for key '$key' in Path::Tiny mock for path '$path' - must be 0|1";
         }
 
-        $new_mocks->{PATH_TINY}->{$path} = $mocks_data->{$path};
+        $new_mocks->{PATH_TINY}->{$normalized_path} = $mocks_data->{$path};
     }
     return $new_mocks;
 }
