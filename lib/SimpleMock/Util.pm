@@ -53,6 +53,7 @@ sub generate_args_sha {
 
 sub namespace_from_file {
     my $file = shift;
+    return '' unless defined $file;
     $file =~ s/\.pm$//;
     $file =~ s/\//::/g;
     return $file;
@@ -60,6 +61,7 @@ sub namespace_from_file {
 
 sub file_from_namespace {
     my $ns = shift;
+    return '.pm' unless defined $ns;
     $ns =~ s/::/\//g;
     return $ns . '.pm';
 }
