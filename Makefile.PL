@@ -5,7 +5,7 @@ my %test_requires = (
     'DBI'              => 0,
     'LWP::UserAgent'   => 0,
     'HTTP::Status'     => 0,
-    'Path::Tiny'       => 0,
+    'Path::Tiny'       => '0.144',
     'URI'              => 0,
 );
 
@@ -98,7 +98,7 @@ WriteMakefile(
           'DBI'            => 0,
           'LWP::UserAgent' => 0,
           'HTTP::Status'   => 0,
-          'Path::Tiny'     => 0,
+          'Path::Tiny'     => '0.144',
           'URI'            => 0,
         },
       },
